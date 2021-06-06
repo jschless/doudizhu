@@ -48,22 +48,19 @@ class Round:
         while not round_finished:
             # do hands until the round is over
             hand_finished = False
-            first_move, hand_type, discard_type = self.players[self.leading_player].play(
-                None, None, None, first_move=True)
-            last_move = first_move
+            last_hand = self.players[self.leading_player].play(last_hand=None)
+
             last_player = current_player
             current_player = (current_player + 1) % 3
             while not hand_finished: 
-                print(last_player, current_player)
                 if last_player == current_player: 
                     # everyone passed
                     print(self.players[current_player].name, ' won this round')
                     hand_finished = True
                     self.leading_player = last_player
                 else:
-                    move = self.players[current_player].play(last_move, hand_type, discard_type)
-                    if move:
-                        last_move = move 
+                    current_hand = self.players[current_player].play(last_hand)
+                    if current_hand.move:
                         last_player = current_player
 
                     if len(self.players[current_player].cards) == 0:

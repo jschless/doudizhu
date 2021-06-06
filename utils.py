@@ -1,3 +1,4 @@
+from enum import Enum
 from collections import Counter
 
 def validate_type(cards):
@@ -33,9 +34,10 @@ def validate_type(cards):
     
     if len(vals) == 1 and vals[0] == 3:
         if check_straight(keys, min_length=2):
-            return("airplane")
+            return(f"{len(keys)}-airplane")
     
     return False
+
 
 def check_straight(cards, min_length=5):
     if len(cards) < min_length:
@@ -46,3 +48,23 @@ def check_straight(cards, min_length=5):
             return False
         last_card = c
     return True
+
+
+discard_moves = {
+    'triple': 1, 
+    'quad': 2, 
+    '2-airplane': 2,
+    '3-airplane': 3
+}
+
+def validate_discard(cards, move_type):
+    n_discards = discard_moves[move_type]
+    value_counts = Counter(cards)
+    keys, values = value_counts.keys(), value_counts.values()
+    if len(set(keys)) == n_discards and len(set(values)) == 1:
+        if list(values)[0] == 2:
+            return f'{n_discards}-pairs'
+        else:
+            return f'{n_discards}-singles'
+    else:
+        return False

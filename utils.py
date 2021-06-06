@@ -42,6 +42,10 @@ def validate_type(cards):
 def check_straight(cards, min_length=5):
     if len(cards) < min_length:
         return False
+    
+    if 15 in cards or 16 in cards or 17 in cards:
+        # can't have a 2 or joker in a straight
+        return False
     last_card = cards[0]
     for c in cards[1:]:
         if not (c - last_card) == 1:

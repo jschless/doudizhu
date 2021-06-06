@@ -43,7 +43,8 @@ class Round:
         while not round_finished:
             # do hands until the round is over
             hand_finished = False
-            first_move, hand_type, discard_type = self.players[self.leading_player].play_first_move()
+            first_move, hand_type, discard_type = self.players[self.leading_player].play(
+                None, None, None, first_move=True)
             last_move = first_move
             last_player = current_player
             current_player = (current_player + 1) % 3

@@ -9,14 +9,19 @@ class Player:
     score: int
     is_turn: bool
     bid: int
+    test: bool
 
-    def __init__(self, name):
+    def __init__(self, name, test=False):
+        if test:
+            random.seed(1)
         self.name = name
         self.cards = None
         self.score = 0
+        self.test = test
 
     def flip_card_over(self):
         # choose a random card and reveal it
+        print(self.name, 'bids first, he got the flipped over card')
         pass
     
     def play(self, last_hand, hand_move_type, hand_discard_type, first_move=False):
@@ -55,7 +60,7 @@ class Player:
                 if not first_move and sum(last_hand) >= sum(move):
                     raise RuntimeError("Tried to play weaker hand")
 
-                if hand_discard_type is not None:
+                if (first_move and move_type in discard_moves) or hand_discard_type is not None:
                     discard_move = input("enter cards to discard separeted by commas:")
                     discard_move = [int(x) for x in discard_move.split(',')]
                     discard_type = validate_discard(discard_move, move_type)
@@ -68,6 +73,7 @@ class Player:
                 break 
             except Exception as e:
                 print(e, 'invalid move, try again')
+                continue
 
         for c in [*move, *discard_move]:
             self.cards.remove(c) 
@@ -79,7 +85,22 @@ class Player:
 
     def get_bid(self, current_bid):
         # bid must be higher than current bid or pass
-        bid = random.randint(0,3)
+        bid = None
+        if self.test:
+            bid = random.randint(0,3)
+        else:
+            print('Your cards: ', self.cards)
+            while True:
+                try:
+                    bid = int(input("Enter your bid: "))
+                except ValueError:
+                    print('Must be a number between 0 and 3')
+                if bid < 0 or bid > 3:
+                    print("Must be between 0 and 3, type 0 to pass")
+                    continue
+                else: 
+                    break 
+
         if bid > current_bid:
             print(self.name, 'bid', bid)
             return bid

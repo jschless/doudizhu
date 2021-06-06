@@ -8,8 +8,12 @@ class Round:
     leading_player: int
     finished: bool
 
-    def __init__(self, players):
+    def __init__(self, players, test=False):
+        if test:
+            random.seed(0)
         self.players = players
+
+    def deal_cards(self):
         deck = []
         for i in range(4):
             deck += list(range(3, 16))
@@ -29,6 +33,7 @@ class Round:
         self.players[self.leading_player].flip_card_over()
 
     def start_round(self):
+        self.deal_cards()
         self.leading_player = self.run_bidding()
         if self.leading_player is None:
             print('reshuffle')
@@ -55,20 +60,19 @@ class Round:
                     print(self.players[current_player].name, ' won this round')
                     hand_finished = True
                     self.leading_player = last_player
-                    if len(self.players[current_player].cards) == 0:
-                        round_finished = True
-                        print(self.players[current_player].name, ' WON THE GAME')
                 else:
                     move = self.players[current_player].play(last_move, hand_type, discard_type)
                     if move:
                         last_move = move 
                         last_player = current_player
+
+                    if len(self.players[current_player].cards) == 0:
+                        round_finished = True
+                        print(self.players[current_player].name, ' WON THE GAME')
+                        break
                     
                     current_player = (current_player + 1) % 3
-            # only play one hand
-            break 
-                
-
+        
     def run_bidding(self):
         # each player makes a bid
         top_bid = 0

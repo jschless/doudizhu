@@ -8,4 +8,5 @@ class TestSimpleRound(unittest.TestCase):
         p2 = Player('Matt', test=True)
         p3 = Player('Zade', test=True)
         r = Round([p1,p2,p3])
+        r.deal_cards()
         self.assertEqual(r.run_bidding(), 1)

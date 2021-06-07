@@ -1,7 +1,7 @@
 import os
 
-from flask import Flask
-
+from flask import Flask, g
+from flask_pymongo import PyMongo
 
 def create_app(test_config=None):
     # create and configure the app
@@ -24,10 +24,12 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    app.config["MONGO_URI"] = "mongodb://localhost:27017/"
+
     # a simple page that says hello
     @app.route('/hello')
     def hello():
-        return 'Hello, World!'
+        return "hello" 
 
     from . import db 
     db.init_app(app)
@@ -35,8 +37,7 @@ def create_app(test_config=None):
     from . import auth
     app.register_blueprint(auth.bp)
 
-    from . import blog 
-    app.register_blueprint(blog.bp)
-    app.add_url_rule('/', endpoint='index')
-
+    @app.route('/')
+    def index():
+        return "index" 
     return app

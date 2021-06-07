@@ -20,6 +20,11 @@ class Player:
         self.score = 0
         self.test = test
 
+    def __dict__(self):
+        return {'username': self.name, 
+                'cards': self.cards, 
+                'score': self.score}
+
     def flip_card_over(self):
         # choose a random card and reveal it
         print(self.name, 'bids first, he got the flipped over card')

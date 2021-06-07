@@ -15,16 +15,13 @@ bp = Blueprint('game', __name__, url_prefix='/game')
 @bp.route('/create', methods=('GET', 'POST'))
 def create():
     if request.method == 'POST':
-        print('processing request')
         error = None
         game = None
         db = get_db().ddz
         if 'create' in request.form:
-            print('creating game')
             game_id = None
             while True:
                 game_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
-                print('proposed game_id ', game_id)
                 if db.games.find_one({'game_id': game_id}) is None:
                     # no existing game has this key
                     print('creating game with id', game_id)

@@ -37,6 +37,9 @@ def create_app(test_config=None):
     from . import auth
     app.register_blueprint(auth.bp)
 
+    from . import game
+    app.register_blueprint(game.bp)
+
     @app.route('/')
     def index():
         return "index" 

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Create Game{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+  <form method="post">
+    <input type="submit" name="create" value="Create Game">
+    <label for="gamecode">Game code:</label><br>
+    <input type="text" id="gamecode" name="gamecode"><br>
+    <input type="submit" name="join" value="Join Game">      
+  </form>
+{% endblock %}

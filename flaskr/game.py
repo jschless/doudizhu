@@ -3,6 +3,8 @@ import random
 import string
 from pprint import pprint
 
+from . import socketio
+
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -45,3 +47,7 @@ def gameboard(id):
     db = get_db().ddz
     game = db.games.find_one({'game_id': id})
     return render_template('game/game.html', game=game)
+
+@socketio.on('connect')
+def connectionMade():
+    print('Connection occured! with ', session['username'])

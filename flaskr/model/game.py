@@ -1,5 +1,5 @@
-from player import Player
-from round import Round
+from .player import Player
+from .round import Round
 
 class Game:
     game_id: str
@@ -9,19 +9,18 @@ class Game:
     scores: dict 
     round: Round
 
-    def __init__(self, player, game_id):
+    def __init__(self, game_id):
         self.game_id = game_id
-        self.player1 = player 
+        self.player1 = None
         self.player2 = None
         self.player3 = None
 
     def __dict__(self):
         return {
             'game_id': self.game_id,
-            'player1': dict(self.player1),
-            'player2': dict(self.player2),
-            'player3': dict(self.player3),
-            'scores': scores
+            'player1': {} if self.player1 is None else dict(self.player1),
+            'player2': {} if self.player2 is None else dict(self.player2),
+            'player3': {} if self.player3 is None else dict(self.player3),
         }
 
     def add_player(self, player):

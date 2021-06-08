@@ -1,7 +1,7 @@
 from collections import Counter
 
-from cards import Cards
-from utils import validate_type, validate_discard, discard_moves
+from .cards import Cards
+from .utils import validate_type, validate_discard, discard_moves
 
 class Hand:
     move: Cards

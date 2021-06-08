@@ -1,21 +1,24 @@
 import random
 from collections import Counter
-from utils import validate_type, validate_discard, discard_moves
-from cards import Cards
-from hand import Hand
+
+from .utils import validate_type, validate_discard, discard_moves
+from .cards import Cards
+from .hand import Hand
 
 class Player:
     name: str
+    user_id: str
     cards: list
     score: int
     is_turn: bool
     bid: int
     test: bool
 
-    def __init__(self, name, test=False):
+    def __init__(self, name, user_id, test=False):
         if test:
             random.seed(1)
         self.name = name
+        self.user_id = user_id
         self.cards = None
         self.score = 0
         self.test = test

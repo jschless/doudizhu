@@ -3,7 +3,7 @@ import os
 from flask import Flask, g
 from flask_pymongo import PyMongo
 from flask_socketio import SocketIO, emit
-
+from flask_login import LoginManager
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_mapping(
@@ -13,6 +13,9 @@ app.config.from_mapping(
 app.config["MONGO_URI"] = "mongodb://localhost:27017/"
 
 socketio = SocketIO(app)
+
+login_manager = LoginManager()
+login_manager.login_view = "users.login"
 
 # ensure the instance folder exists
 try:

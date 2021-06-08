@@ -1,6 +1,8 @@
 import random
-from player import Player
-from cards import Cards
+
+
+from .player import Player
+from .cards import Cards
 
 class Round:
     players: list

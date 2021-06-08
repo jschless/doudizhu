@@ -3,6 +3,8 @@ import random
 import string
 from pprint import pprint
 
+from flask_login.utils import login_required
+
 from . import socketio
 
 from flask import (
@@ -18,6 +20,7 @@ from .model.player import Player
 bp = Blueprint('game', __name__, url_prefix='/game')
 
 @bp.route('/create', methods=('GET', 'POST'))
+@login_required
 def create():
     print('happening')
     if request.method == 'POST':

@@ -6,7 +6,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from flask_login import login_user
+from flask_login import login_user, logout_user, login_required
 from flaskr.db import get_db
 
 from bson import json_util
@@ -29,21 +29,29 @@ def login():
         user.username = form.username.data
         user.password_hash = generate_password_hash(form.password.data)
         error = None
-        
+
         if 'create' in request.form:
             print('User created')
             error = user.save() 
-        
+
         if 'login' in request.form or error is None:
             # If there's a login request, or creating the user worked 
             login_success = login_user(user, remember=True)
             if login_success:
                 flash("Login successful")
+                print(user)
                 next = request.args.get('next')
                 
         if error is None:
+            print(next, next or url_for('index'), url_for('index'))
             return redirect(next or url_for('index'))
 
         flash(error)
 
     return render_template('auth/login.html', form=form)
+
+@bp.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(somewhere)

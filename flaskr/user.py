@@ -2,7 +2,7 @@ import random
 
 from flask_login import UserMixin
 from flaskr.db import get_db
-
+from bson.objectid import ObjectId
 
 def get_random_unicode(length):
 
@@ -35,16 +35,21 @@ class User(UserMixin):
 
     @property
     def is_authenticated(self):
+        print('happening')
         db = get_db().ddz
         record = db.users.find_one(
             {'username': self.username, 
              'password_hash': self.password_hash})
-        
+        print(record)
         if record is not None:
-            self.id = str(record._id)
+            self.id = str(record['_id'])
+            print('authenticating user with id', self.id)
+            return True
+        else:
+            return False
 
-        return record is not None
-
+    def __str__(self):
+        return self.username
 
     def get_id(self):
         try:
@@ -60,15 +65,23 @@ class User(UserMixin):
 
     @classmethod
     def get(cls, user_id):
+        if user_id is None or user_id == "None":
+            print('user id is None')
+            print(user_id)
+            return None
         # finds user in db and returns object 
+        print('getting user with user_id', user_id, type(user_id))
         db = get_db().ddz
-        record = db.users.find_one({'_id': user_id})
+        record = db.users.find_one({'_id': ObjectId(user_id)})
         if record is not None:
             user = User()
-            user.username = record.username
-            user.password_hash = record.password_hash
+            user.username = record['username']
+            user.password_hash = record['password_hash']
             user.id = user_id
+            print('User found')
+            return user
         else:
+            print('user does not exist')
             return None
     
     def check_username_availability(self):
@@ -83,7 +96,7 @@ class User(UserMixin):
             error = 'Username already taken.'
         else:
             db = get_db().ddz
-            user_id = db.users.insert_one(self.__dict__())
+            user_id = db.users.insert_one(self.__dict__()).inserted_id
             self.id = str(user_id)
         return error
         

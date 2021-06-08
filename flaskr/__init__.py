@@ -15,7 +15,7 @@ app.config["MONGO_URI"] = "mongodb://localhost:27017/"
 socketio = SocketIO(app)
 
 login_manager = LoginManager()
-login_manager.login_view = "users.login"
+login_manager.login_view = "auth.login"
 
 # ensure the instance folder exists
 try:

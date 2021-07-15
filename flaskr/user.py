@@ -35,7 +35,7 @@ class User(UserMixin):
 
     @property
     def is_authenticated(self):
-        print('happening')
+        print('is authenticated is executing')
         db = get_db().ddz
         record = db.users.find_one(
             {'username': self.username, 
@@ -52,6 +52,7 @@ class User(UserMixin):
         return self.username
 
     def get_id(self):
+        print('trying to get id')
         try:
             return self.id
         except AttributeError:

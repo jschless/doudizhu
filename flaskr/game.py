@@ -1,5 +1,6 @@
 import functools
 import random
+import time
 import string
 from pprint import pprint
 
@@ -19,7 +20,7 @@ from flaskr.db import get_db
 from .model.game import Game
 from .model.player import Player
 
-bp = Blueprint('game', __name__, url_prefix='/game')
+bp = Blueprint('game', __name__, url_prefix='/')
 
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
@@ -37,11 +38,14 @@ def create():
                     # no existing game has this key
                     print('creating game with id', game_id)
                     print(session)
-                    gameboard = initialize_game()
                     record = {'game_id': game_id, 
-                              'players': [(session['_user_id'], current_user.username)],
-                              'n_players': 1,
-                              **gameboard
+                              'players': [
+                                  {
+                                      'user_id': session['_user_id'], 
+                                      'username': current_user.username
+                                  }
+                                  ],
+                              'n_players': 1
                               }
                     # player = Player(session['username'], session['user_id'])
                     # game = Game(player, game_id)
@@ -51,22 +55,23 @@ def create():
         elif 'join' in request.form:
             game_id = request.form['gamecode']
             game = db.games.find_one({'game_id': game_id})
-            if game['n_players'] == 3:
-                initialize_game()
+            if game['n_players'] == 3: # this is just for DEBUG
+                run_game(game_id)
             if game is None:
                 error = "No game exists with that code"
-            elif session['_user_id'] in [x[0] for x in game['players']]:
+            elif session['_user_id'] in [x['user_id'] for x in game['players']]:
                 print('player re-entering room')
             elif game['n_players'] == 3:
                 error = "Game is full"
             else:
-                game['players'].append((session['_user_id'], current_user.username))
+                game['players'].append({
+                    'user_id': session['_user_id'], 
+                    'username': current_user.username})
                 game['n_players'] += 1
                 print('adding player to game', game)
                 db.games.replace_one({'game_id': game_id}, game)
                 if game['n_players'] == 3:
-                    initialize_game()
-
+                    run_game(game_id)
 
         ## TODO add a leave room option 
 
@@ -76,28 +81,50 @@ def create():
         flash(error)
     return render_template('game/create_game.html')
 
-@bp.route('/<id>', methods=('GET',))
+@bp.route('/<id>', methods=('GET', 'POST'))
 def gameboard(id):
     db = get_db().ddz
     game = db.games.find_one({'game_id': id})
     print(current_user)
+    if request.method == 'POST':
+        print('Clicked the start game button')
+
     return render_template('game/game.html', game=game)
 
 @socketio.on('connect')
 def connectionMade():
     print('Connection occured! with ', current_user.username, request.sid)
-    
+
+@socketio.on('add to database')
+def add_to_db(data):
+    print(data)
+    print('adding to database')
+    game = get_game(data['game_id'])
+    print(game)
+    for player in game['players']:
+        if player['username'] == data['username']:
+            player['socketid'] = request.sid
+    update_game(game)
+
+
 @socketio.on('disconnect')
 def test_disconnect():
     print('Client disconnected', current_user.username)
 
-@socketio.on('my event')
-def handleCustomEvent(data):
-    print('received from client', data)
-    # emit('start game', "Starting the game now")
+@socketio.on('remove from database')
+def removeFromDB(data):
+    print("Not implemented yet")
 
-#
-def initialize_game():
+def run_game(game_id):
+    print('running a game')
+    initialize_game(game_id)
+    begin_bidding(game_id)
+
+def initialize_game(game_id):
+    print('dealing cards and initializing game')
+    db = get_db().ddz
+    game = db.games.find_one({'game_id': game_id})
+
     deck = []
     for i in range(4):
         deck += list(range(3, 16))
@@ -108,18 +135,50 @@ def initialize_game():
 
     random.shuffle(deck)
 
-    hands = [sorted(deck[:17]), sorted(deck[17:34]), sorted(deck[34:51]) ]
-    blind = sorted(deck[51:])
+    hands = [sorted(deck[:17]), sorted(deck[17:34]), sorted(deck[34:51])]
+    for h, p in zip(hands, game['players']):
+        p['hand'] = h
 
-    flipped_card = random.randint(0, 51)
-    return {'hands': hands, 'blind': blind, 'flipped_card': flipped_card}
-    # socketio.emit('deal cards', data=hands, broadcast=True)
-    # game = db.games.find_one({'game_id': game_id})
-    # game['cards'] = [] 
+    game['blind'] = sorted(deck[51:])
+    game['flipped_card'] = random.randint(0, 51)
 
-### Game state
-# players
-# cards 
-# bids
-# blind 
-# currentPile
+    db.games.replace_one({'game_id': game_id}, game)
+    socketio.emit('cards dealt', "hello")
+
+def begin_bidding(game_id):
+    print('starting bidding')
+    game = get_game(game_id)
+    for p in game['players']:
+        print('Sending bid request to ', p['username'])
+        socketio.emit('bid')#, to=p['socketid'])
+        # while True:
+        #     # check every second whether we have received the bid
+        #     time.sleep(1)
+        #     new_game = get_game(game_id)
+        #     for p2 in new_game['players']:
+        #         if p['username'] == p2['username'] and 'bid' in p:
+        #             socketio.emit('update gameboard')
+        #             break
+    
+    # game = get_game(game_id)
+    # winner = None
+    # current_high_bid = 0
+    # for p in game['players']:
+    #     if p['bid'] > current_high_bid:
+    #         winner = p
+    # print('bidding complete. Landlord is: ', p)
+
+def get_game(game_id):
+    return get_db().ddz.games.find_one({'game_id': game_id})
+
+def update_game(game):
+    return get_db().ddz.games.replace_one({'game_id': game['game_id']}, game)
+
+@socketio.on("submit bid")
+def add_bid(data):
+    print('received a bid', data)
+    game = get_game(data['info']['game_id'])
+    for p in game['players']:
+        if p['username'] == data['info']['username']:
+            p['bid'] = data['bid']
+    update_game(game)        

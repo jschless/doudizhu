@@ -1,3 +1,44 @@
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+  <script type="text/javascript" charset="utf-8">
+
+    console.log('Javascript running')
+      info = {game_id: '{{game.game_id}}',
+              username: '{{current_user.username}}'};
+
+      var socket = io();
+      socket.on('connect', function () {
+        console.log('connected with server')
+        socket.emit('add to database', info);
+      });
+
+      socket.on('disconnect', info);
+
+      socket.on('start game', function() {
+        console.log('starting game');
+        location.reload();
+      });
+
+      socket.on('update gameboard', function() {
+        console.log('refreshing game');
+        location.reload();
+      });
+
+      socket.on('cards dealt', function() {
+        console.log('received cards');
+        location.reload();
+      });
+
+      console.log('Test')
+      socket.on('bid', function(){
+        //alert('bidding began')
+        console.log('received bid request');
+        let userBid = 2;
+        //let userBid = prompt("Enter your bid (0,1,2,3)");
+        //socket.emit('submit bid', {bid: 2});
+        //socket.emit('submit bid', {info, bid: userBid});
+      });
+  </script>
 {% extends 'base.html' %}
 
 {% block header %}
@@ -6,34 +47,26 @@
 
 {% block content %}
   <h1>Game ID: {{ game.game_id }} </h1>
+  <form method="post">
+    <input type="submit" name="start_game" value="Start Game">
+  </form>
   <h2>Users currently in lobby:</h2>
-  <ul>
+  <ul id="horizontal">
     {% for user in game.players %}
-      <li> {{ user[1] }}</li>
+      <li> {{ user.username }}</li>
     {% endfor %}
   </ul>
 
-  <h3>Cards</h3>
-  <ul>
-    {% for }
-  </ul>  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-  <script type="text/javascript" charset="utf-8">
-      var socket = io();
-      socket.on('connect', function() {
-          socket.emit('my event', {data: 'I\'m connected!'});
-      });
+  <!-- Current user info -->
 
-      socket.on('start game', function() {
-        console.log('starting game');
-      });
-
-      socket.on('deal cards', function(hands) {
-        console.log('received cards');
-        hands[0].forEach(element => {
-          document.getElementById('cards').innerHTML += '<li>' + element + '</li>';          
-        });
-      });
-  </script>
+  {% for p in game.players %}
+   <h2> {{p.username }} </h2>
+      <h3> Cards </h3>
+      <ul id="horizontal">
+        {% for card in p.hand %}
+          <li> {{card}} </li>
+        {% endfor %}
+      </ul>  
+  {% endfor %}
 
 {% endblock %}

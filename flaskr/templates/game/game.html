@@ -29,15 +29,19 @@
         location.reload();
       });
 
-      console.log('Test')
       socket.on('bid', function(){
-        //alert('bidding began')
         console.log('received bid request');
-        let userBid = 2;
-        //let userBid = prompt("Enter your bid (0,1,2,3)");
-        //socket.emit('submit bid', {bid: 2});
-        //socket.emit('submit bid', {info, bid: userBid});
+        let userBid = prompt("Enter your bid (0,1,2,3)");
+        socket.emit('submit bid', {info, bid: userBid});
+        console.log('submitted bid');
       });
+
+      socket.on('make move', function(){
+        console.log('received move request');
+        let userMove = prompt("Enter your move separated by commas");
+        socket.emit('submit move', {info, move: userMove});
+      });
+
   </script>
 {% extends 'base.html' %}
 

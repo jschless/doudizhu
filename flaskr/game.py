@@ -22,7 +22,7 @@ from .model.player import Player
 
 from .model.utils import validate_type, validate_discard
 
-N_PLAYERS = 1
+N_PLAYERS = 3
 
 bp = Blueprint('game', __name__, url_prefix='/')
 
@@ -113,7 +113,8 @@ def removeFromDB(data):
 def run_game(game_id):
     print('running a game')
     initialize_game(game_id)
-    get_bid(game_id)
+    get_bid(game_id, 0, first_bid=True)
+
 
 def initialize_game(game_id):
     print('dealing cards and initializing game')
@@ -128,8 +129,9 @@ def initialize_game(game_id):
     hands = [sorted(deck[:17]), sorted(deck[17:34]), sorted(deck[34:51])]
     game['blind'] = sorted(deck[51:])
     
-    first_bid = random.randint(0, 3)
-    first_bid = 0 # TEMPORARY for testing with one player
+    first_bid = random.randint(0, 2)
+    print('first bid goes to', first_bid)
+    # first_bid = 0 # TEMPORARY for testing with one player
     flipped_card = random.choice(hands[first_bid])
     game['flipped_card'] = flipped_card
 
@@ -143,20 +145,29 @@ def initialize_game(game_id):
     game['first_bidder'] = first_bid
     game['current_player'] = first_bid
 
-    for key in ['hand_type', 'discard_type']:
+    for key in ['hand_type', 'discard_type', 'landlord']:
         if key in game:
             del game[key]
+
+    # player level variables
+    for key in ['bid']:
+        for p in game['players']:
+            if key in p:
+                del p[key]
+
     game['hand_history'] = []
 
-    game['current_player'] = 0 # TEMPORARY for testing with one player
+    # game['current_player'] = 0 # TEMPORARY for testing with one player
+    pprint(game)
     update_game(game)
 
-def get_bid(game_id):
-    print('starting bidding')
+def get_bid(game_id, minimum: int, first_bid: bool = False):
     game = get_game(game_id)
-    p = game['players'][game['current_player']] # first bid
+    p = game['players'][game['current_player']]
     print('Sending bid request to ', p['username'], p['socketid'])
-    socketio.emit('bid', to=p['socketid'])
+    if first_bid:
+        flash_message(f'{p["username"]} is now bidding')
+    socketio.emit('bid', minimum, to=p['socketid'])
 
 
 def get_game(game_id):
@@ -165,7 +176,8 @@ def get_game(game_id):
 def update_game(game):
     """Send new game state to all players and update game DB record"""
     for p in game['players']:
-        socketio.emit('update gameboard', generate_game_data(game, p))
+        socketio.emit('update gameboard', generate_game_data(game, p),
+         to=p['socketid'])
     return get_db().ddz.games.replace_one({'game_id': game['game_id']}, game)
 
 def generate_game_data(game, player):
@@ -189,12 +201,14 @@ def generate_game_data(game, player):
         if p['user_id'] == player['user_id']:
             game_state['hand'] = p.get('hand', [])
         else:
-            game_state['others'].append({
+            game_state['other_players'].append({
                 'n_cards': len(p.get('hand', [])),
                 'visible_cards': []
                 })
 
         game_state['usernames'] = usernames
+    print('sending the following to', player['username'])
+    pprint(game_state)
     return game_state
 
 @socketio.on("submit bid")
@@ -203,17 +217,19 @@ def add_bid(data):
     game = get_game(data['info']['game_id'])
     p = game['players'][game['current_player']] # first bid
     p['bid'] = int(data['bid'])
-    flash_message(f'{p["username"]} bidded {p["bid"]}')
-    for p in game['players']:
-        if 'bid' not in p:
-            game['current_player'] = (game['current_player'] + 1) % N_PLAYERS
-            update_game(game)
-            get_bid(game['game_id'])
-            return
+    max_bid = max(p.get('bid', 0) for p in game['players'])
+    update_game(game)
+    if p['bid'] == 3 or all('bid' in p for p in game['players']):
+        # bidding is complete, find winner and start game 
+        assign_landlord(game)
+    else:
+        game['current_player'] = (game['current_player'] + 1) % N_PLAYERS
+        flash_message(f'''{p["username"]} bid {p["bid"]}, 
+            {game['players'][game["current_player"]]} is now bidding''')
+        update_game(game)
+        get_bid(game['game_id'], max_bid, first_bid=False)
 
-    # bidding is complete, find winner and start game 
-    assign_landlord(game)
-
+    
 def assign_landlord(game):
     """Takes a game_id and assigns a landlord based on bids"""
     winner, winner_loc = None, None
@@ -234,15 +250,23 @@ def assign_landlord(game):
     get_move(game['game_id'])
 
 
-def get_move(game_id):
+def get_move(game_id, retry=False):
     game = get_game(game_id)
     p = game['players'][game['current_player']] # it's this person's move
     print('Sending move request to ', p['username'], p['socketid'])
-    socketio.emit('make move', to=p['socketid'])
+    if retry:
+        flash_message('Invalid move attempt, try again', player=p)
+        socketio.emit('make move', to=p['socketid'])
 
-def flash_message(message: str) -> None:
+    socketio.emit('make move', to=p['socketid'])
+    
+
+def flash_message(message: str, player=None) -> None:
     """Displays a notification in red at the top of the client"""
-    socketio.emit('flash', message)
+    if player:
+        socketio.emit('flash', message, to=player['socketid'])
+    else:
+        socketio.emit('flash', message)
 
 @socketio.on("submit move")
 def add_move(data):
@@ -258,13 +282,15 @@ def add_move(data):
     if not (valid_move and valid_discard): 
         # redo, get the same move
         print('invalid move, resending submission', valid_move, valid_discard)
-        get_move(game['game_id'])
+        get_move(game['game_id'], retry=True)
     else:
         game['hand_type'] = valid_move
         game['hand_history'].append((move, discard))
         game['discard_type'] = valid_discard
         flash_message(
             f'{p["username"]} played a {valid_move} with {valid_discard}')
+
+        print(p['hand'])
         for card in [*move, *discard]:
             p['hand'].remove(card)
         
@@ -287,10 +313,15 @@ def validate_move(game, move, discard):
     print('validating', move, discard)
     hand_type = validate_type(move)
     discard_type = validate_discard(discard, hand_type)
+    last_move = game['hand_history'][-1]
+
     if 'hand_type' in game:
         # there is already a round type, make sure it's valid
         if game['hand_type'] == hand_type and game['discard_type'] == discard_type:
-            return hand_type, discard_type
+            if sum(last_move[0]) >= sum(move):
+                raise Exception(f'Attempted move is weaker than last hand')
+            else:
+                return hand_type, discard_type
         else:
             raise Exception(f'''Hand type and discard type did not match what was required
              ({hand_type} !=  {game["hand_type"]} or {discard_type} != {game["discard_type"]}''')
@@ -298,5 +329,6 @@ def validate_move(game, move, discard):
         # set the first move
         return hand_type, discard_type
     else:
-        # first move was invlaid
+        # first move was invalid
+        raise Exception(f'Attempted move was invalid move: {move} discard: {discard}')
         return False, False

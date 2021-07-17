@@ -24,9 +24,11 @@
       });
 
       $('#bidding').hide()
-      socket.on('bid', function(){
-        console.log('received bid request');
+      socket.on('bid', function(max_bid){
+        console.log('received bid request with minimum', max_bid);
         $('#bidding').show()
+        if (max_bid == 1) $('#1bid').hide()
+        if (max_bid == 2) $('#1bid #2bid').hide()
         $('#submit_bid').click(function() {
           let bid = $('input[name="bid"]:checked').val();
           console.log('submitting bid', bid);
@@ -44,10 +46,7 @@
         $('#move_stuff').show();
       });
 
-      socket.on('flash', function(message){
-        console.log('flashing', message);
-        $("#flash").text(message).css('color', 'red');
-      });
+      socket.on('flash', (m) => $("#flash").text(message).css('color', 'red'));
 
       function drawBoard(data){
         console.log('received data to display', data);
@@ -55,6 +54,7 @@
         $("#gameboard").empty();
         $("#gameboard").append('<h2>Users currently in lobby:</h2>', 
         '<ul></ul>'); 
+
         $.each(data['usernames'], function(i){
           $("#gameboard").append($("<li></li>").text(data['usernames'][i]));
         });
@@ -118,28 +118,26 @@
                   }
                   break;
                 default:
-                    console.log('Nothing');
+                    console.log('Button click not implemented');
             }
             console.log('hand', hand, 'discard', discard);
-
        });
       }
 
-      $("#submit_move").click(function(){
+      function submitMove(){
         socket.emit('submit move', {info: info, move: hand, discard: discard});
         hand = [];
         discard = [];
         $("#move_stuff").hide();
         $("#move_flash").text("");
-      });
+      }
+
+      $("#submit_move").click(submitMove);
 
       $("#pass_move").click(function(){
-        socket.emit('submit move', {info: info, move: [], discard: []});
         hand = [];
         discard = [];
-        $("#move_stuff").hide();
-        $("#move_flash").text("");
-
+        submitMove();
       });
 
       card_to_string = {
@@ -177,10 +175,6 @@
   </script>
 {% extends 'base.html' %}
 
-{% block header %}
-  <h1>{% block title %}Create Game{% endblock %}</h1>
-{% endblock %}
-
 {% block content %}
   <h1>Game ID: {{ game.game_id }} </h1>
   <h2 id="flash"></h2>
@@ -199,13 +193,13 @@
 
   <div id="bidding">
     <h2>Make your bid</h2>
-    <input type="radio" id="0" name="bid" value=0>
+    <input type="radio" id="0bid" name="bid" value=0>
     <label for="0">Pass</label><br>
-    <input type="radio" id="0" name="bid" value=1>
+    <input type="radio" id="1bid" name="bid" value=1>
     <label for="0">1</label><br>
-    <input type="radio" id="0" name="bid" value=2>
+    <input type="radio" id="2bid" name="bid" value=2>
     <label for="0">2</label><br>
-    <input type="radio" id="0" name="bid" value=3>
+    <input type="radio" id="3bid" name="bid" value=3>
     <label for="0">3</label><br>
     <input id="submit_bid" type="submit" name="submit bid" value="Submit Bid">
   </div>

@@ -23,18 +23,23 @@
         drawBoard(data)
       });
 
+      $('#bidding').hide()
       socket.on('bid', function(){
         console.log('received bid request');
-        let userBid = prompt("Enter your bid (0,1,2,3)");
-        socket.emit('submit bid', {info, bid: userBid});
-        console.log('submitted bid', userBid);
+        $('#bidding').show()
+        $('#submit_bid').click(function() {
+          let bid = $('input[name="bid"]:checked').val();
+          console.log('submitting bid', bid);
+          socket.emit('submit bid', {info, bid: bid});
+          $('#bidding').hide()
+        });        
       });
 
+      $('#submit_move').hide()
+
       socket.on('make move', function(){
-        console.log('received move request');
-        let userMove = prompt("Enter your move separated by commas (no discards)");
-        let userDiscard = prompt("Enter your discards");
-        socket.emit('submit move', {info, move: userMove, discard: userDiscard});
+        $("#flash").text("It's your move!").css('color', 'red');
+        $('#submit_move').show();
       });
 
       socket.on('flash', function(message){
@@ -52,17 +57,97 @@
           $("#gameboard").append($("<li></li>").text(data['usernames'][i]));
         });
 
-        console.log(data['hand'].join());
-
-        $("#gameboard").append('<h2>Your Hand</h2>', 
-        $("<p></p>").text(data['hand'].join()))
+        drawCards(data['hand'])
 
         $("#gameboard").append('<h2>Current Round</h2>', 
         $("<p></p>").text("Round Type", data['hand_type']),
         $("<p></p>").text("Round History", data['hand_history']))
       }
-  });
-  
+
+      var hand = [];
+      var discard = [];
+      
+      function drawCards(cards){
+        $("#cards").empty();
+        cards.forEach(card => {
+          let img = $('<img />');
+          img.attr('id', card)
+          img.attr('src', '/static/card-images/' + cardToImage(card));
+          img.attr('width', '50px')
+          $("#cards").append(img);
+        });
+
+        $("img").mousedown(function(event) {
+          // https://stackoverflow.com/questions/10170280/jquery-selecting-image
+            switch (event.which) {
+                case 1:
+                  if($(this).hasBorder()) {
+                    $(this).css("border", "");
+                    hand.pop($(this).attr("id"))
+                    //you can remove the id from array if you need to
+                  }
+                  else {
+                    $(this).css("border", "2px solid red");
+                    hand.push($(this).attr("id")); //something like this 
+                  }
+                  break;
+                case 3:
+                  if($(this).hasBorder()) {
+                    $(this).css("border", "");
+                    discard.pop($(this).attr("id"))
+                    //you can remove the id from array if you need to
+                  }
+                  else {
+                    $(this).css("border", "2px solid blue");
+                    discard.push($(this).attr("id")); //something like this 
+                  }
+                  break;
+                default:
+                    console.log('Nothing');
+            }
+            console.log('hand', hand, 'discard', discard);
+
+       });
+      }
+
+      $("#submit_move").click(function(){
+        socket.emit('submit move', {info: info, move: hand, discard: discard});
+        hand = [];
+        discard = [];
+      });
+
+      card_to_string = {
+        11: "jack",
+        12: "queen",
+        13: "king", 
+        14: "1",
+        15: "2",
+        16: "joker_black",
+        17: "joker_red"
+      }
+
+      function cardToImage(card){
+        // Takes a card (int) and gets the card picture
+        if (card == 16 | card == 17) {
+          return card_to_string[card] + '.png'
+        }
+        else if (card in card_to_string) {
+          return "club_" + card_to_string[card] + '.png'
+        }
+        else {
+          return "club_" + card.toString() + '.png'
+        }
+      }
+
+      $.fn.hasBorder = function() {   
+        if ((this.outerWidth() - this.innerWidth() > 0) ||  (this.outerHeight() - this.innerHeight() > 0)){
+              return true;
+          }
+          else{
+              return false;
+          }
+      };
+    });
   </script>
 {% extends 'base.html' %}
 
@@ -77,4 +162,22 @@
 
   <div id="gameboard"></div>
 
+  <h2>Your Hand</h2>
+  <div id="cards">
+  </div>
+  <input id="submit_move" type="submit" name="submit move" value="Submit Move">
+
+
+  <div id="bidding">
+    <h2>Make your bid</h2>
+    <input type="radio" id="0" name="bid" value=0>
+    <label for="0">Pass</label><br>
+    <input type="radio" id="0" name="bid" value=1>
+    <label for="0">1</label><br>
+    <input type="radio" id="0" name="bid" value=2>
+    <label for="0">2</label><br>
+    <input type="radio" id="0" name="bid" value=3>
+    <label for="0">3</label><br>
+    <input id="submit_bid" type="submit" name="submit bid" value="Submit Bid">
+  </div>
 {% endblock %}

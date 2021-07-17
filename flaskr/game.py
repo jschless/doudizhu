@@ -100,7 +100,7 @@ def add_to_db(data):
 def debug(data):
     """For random functions I want to test out, so that I can activate them on click"""
     run_game(data['game_id'])
-    #  update_game(get_game(data['game_id']))
+    #update_game(get_game(data['game_id']))
 
 @socketio.on('disconnect')
 def test_disconnect():
@@ -235,15 +235,9 @@ def add_move(data):
     game = get_game(data['info']['game_id'])
     p = game['players'][game['current_player']]
 
-    if data['move'] == '':
-        move = []
-    else:
-        move = [int(x) for x in data['move'].split(',')]
+    move = [int(x) for x in data['move']]
 
-    if data['discard'] == '':
-        discard = []
-    else:
-        discard = [int(x) for x in data['discard'].split(',')]
+    discard = [int(x) for x in data['discard']]
     
     valid_move, valid_discard = validate_move(game, move, discard)
     if not valid_move and not valid_discard: 

@@ -143,6 +143,11 @@ def initialize_game(game_id):
     game['first_bidder'] = first_bid
     game['current_player'] = first_bid
 
+    for key in ['hand_type', 'discard_type']:
+        if key in game:
+            del game[key]
+    game['hand_history'] = []
+
     game['current_player'] = 0 # TEMPORARY for testing with one player
     update_game(game)
 
@@ -166,13 +171,21 @@ def update_game(game):
 def generate_game_data(game, player):
     """Create a dict to send to the client that includes relevant data"""
     game_state = {
-        'usernames': [p['username'] for p in game['players']],
         'other_players': [], 
         'hand_type': game.get('hand_type', 'None'),
+        'discard_type': game.get('discard_type', 'None'),
         'hand_history': game.get('hand_history', [])
     }
 
+    usernames = []
     for p in game['players']:
+        if 'landlord' in game:
+            if p['username'] == game['landlord']:
+                usernames.append(p['username'] + ' (landlord)')
+            else:
+                usernames.append(p['username'] + ' (peasant)')
+        else:
+            usernames.append(p['username'])
         if p['user_id'] == player['user_id']:
             game_state['hand'] = p.get('hand', [])
         else:
@@ -180,6 +193,8 @@ def generate_game_data(game, player):
                 'n_cards': len(p.get('hand', [])),
                 'visible_cards': []
                 })
+
+        game_state['usernames'] = usernames
     return game_state
 
 @socketio.on("submit bid")
@@ -213,7 +228,7 @@ def assign_landlord(game):
     game['current_player'] = winner_loc
     p['hand'] += game['blind']
     p['visible_cards'] += game['blind']
-    game['landlord'] = p
+    game['landlord'] = p['username']
     update_game(game)
     time.sleep(2)
     get_move(game['game_id'])
@@ -240,11 +255,13 @@ def add_move(data):
     discard = [int(x) for x in data['discard']]
     
     valid_move, valid_discard = validate_move(game, move, discard)
-    if not valid_move and not valid_discard: 
+    if not (valid_move and valid_discard): 
         # redo, get the same move
+        print('invalid move, resending submission', valid_move, valid_discard)
         get_move(game['game_id'])
     else:
         game['hand_type'] = valid_move
+        game['hand_history'].append((move, discard))
         game['discard_type'] = valid_discard
         flash_message(
             f'{p["username"]} played a {valid_move} with {valid_discard}')
@@ -257,6 +274,7 @@ def add_move(data):
             return 
         else:
             # move onto the next player
+            print('advancing to next player')
             game['current_player'] = (game['current_player'] + 1) % N_PLAYERS
             update_game(game)
             time.sleep(2)
@@ -266,11 +284,16 @@ def add_move(data):
 def validate_move(game, move, discard):
     """Takes in a game, attempted move, and attempted discard 
     and returns whether they are valid"""
+    print('validating', move, discard)
     hand_type = validate_type(move)
     discard_type = validate_discard(discard, hand_type)
     if 'hand_type' in game:
         # there is already a round type, make sure it's valid
-        return game['hand_type'] == hand_type, game['discard_type'] == discard_type
+        if game['hand_type'] == hand_type and game['discard_type'] == discard_type:
+            return hand_type, discard_type
+        else:
+            raise Exception(f'''Hand type and discard type did not match what was required
+             ({hand_type} !=  {game["hand_type"]} or {discard_type} != {game["discard_type"]}''')
     elif hand_type and discard_type:
         # set the first move
         return hand_type, discard_type

@@ -20,7 +20,7 @@
       });
 
       socket.on('update gameboard', function(data) {
-        drawBoard(data)
+        drawBoard(data);
       });
 
       $('#bidding').hide()
@@ -32,14 +32,16 @@
           console.log('submitting bid', bid);
           socket.emit('submit bid', {info, bid: bid});
           $('#bidding').hide()
-        });        
+        });
       });
 
-      $('#submit_move').hide()
+      $('#move_stuff').hide()
 
       socket.on('make move', function(){
-        $("#flash").text("It's your move!").css('color', 'red');
-        $('#submit_move').show();
+        $("#move_flash").text("It's your move!").css('color', 'red');
+        hand = [];
+        discard = [];
+        $('#move_stuff').show();
       });
 
       socket.on('flash', function(message){
@@ -57,11 +59,24 @@
           $("#gameboard").append($("<li></li>").text(data['usernames'][i]));
         });
 
-        drawCards(data['hand'])
+        $("#gameboard").append('<h2>Current Round</h2>',
+        $("<p></p>").text("Round Type: " + data['hand_type']))
 
-        $("#gameboard").append('<h2>Current Round</h2>', 
-        $("<p></p>").text("Round Type", data['hand_type']),
-        $("<p></p>").text("Round History", data['hand_history']))
+        // Last hand 
+        if (data['hand_history'].length > 0) {
+          let lastMove = data['hand_history'][data['hand_history'].length-1]
+          $("#gameboard").append('<div id="last_move"></div');
+          $("#last_move").empty();
+          $("#last_move").append('<h2>Last Move</h2>');
+          lastMove[0].forEach(card => {
+            let img = $('<img />');
+            img.attr('id', card)
+            img.attr('src', '/static/card-images/' + cardToImage(card));
+            img.attr('width', '50px')
+            $("#last_move").append(img);
+          });
+        } 
+        drawCards(data['hand']);
       }
 
       var hand = [];
@@ -114,6 +129,17 @@
         socket.emit('submit move', {info: info, move: hand, discard: discard});
         hand = [];
         discard = [];
+        $("#move_stuff").hide();
+        $("#move_flash").text("");
+      });
+
+      $("#pass_move").click(function(){
+        socket.emit('submit move', {info: info, move: [], discard: []});
+        hand = [];
+        discard = [];
+        $("#move_stuff").hide();
+        $("#move_flash").text("");
+
       });
 
       card_to_string = {
@@ -163,10 +189,13 @@
   <div id="gameboard"></div>
 
   <h2>Your Hand</h2>
+  <div id="move_flash"></div>
   <div id="cards">
   </div>
-  <input id="submit_move" type="submit" name="submit move" value="Submit Move">
-
+  <div id="move_stuff">
+    <input id="submit_move" type="submit" name="submit move" value="Submit Move">
+    <input id="pass_move" type="submit" name="submit bid" value="Pass">  
+  </div>
 
   <div id="bidding">
     <h2>Make your bid</h2>

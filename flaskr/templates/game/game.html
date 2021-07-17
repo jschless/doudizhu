@@ -26,9 +26,21 @@
       $('#bidding').hide()
       socket.on('bid', function(max_bid){
         console.log('received bid request with minimum', max_bid);
+        var radios = [0];
+        if (max_bid < 1 ) radios.push(1)
+        if (max_bid < 2) radios.push(2)
+        radios.push(3)
+
+        radios.forEach(value => {
+          $('#bidding')
+          .append(`<input type="radio" id="${value}" name="bid" value="${value}">`)
+          .append(`<label for="${value}">${value}</label></div>`)
+          .append(`<br>`);
+        });
+
+        $('#bidding').append('<input id="submit_bid" type="submit" name="submit bid" value="Submit Bid">')
+
         $('#bidding').show()
-        if (max_bid == 1) $('#1bid').hide()
-        if (max_bid == 2) $('#1bid #2bid').hide()
         $('#submit_bid').click(function() {
           let bid = $('input[name="bid"]:checked').val();
           console.log('submitting bid', bid);
@@ -46,7 +58,7 @@
         $('#move_stuff').show();
       });
 
-      socket.on('flash', (m) => $("#flash").text(message).css('color', 'red'));
+      socket.on('flash', (m) => $("#flash").text(m).css('color', 'red'));
 
       function drawBoard(data){
         console.log('received data to display', data);
@@ -193,14 +205,5 @@
 
   <div id="bidding">
     <h2>Make your bid</h2>
-    <input type="radio" id="0bid" name="bid" value=0>
-    <label for="0">Pass</label><br>
-    <input type="radio" id="1bid" name="bid" value=1>
-    <label for="0">1</label><br>
-    <input type="radio" id="2bid" name="bid" value=2>
-    <label for="0">2</label><br>
-    <input type="radio" id="3bid" name="bid" value=3>
-    <label for="0">3</label><br>
-    <input id="submit_bid" type="submit" name="submit bid" value="Submit Bid">
   </div>
 {% endblock %}

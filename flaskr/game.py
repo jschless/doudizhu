@@ -225,7 +225,7 @@ def add_bid(data):
     else:
         game['current_player'] = (game['current_player'] + 1) % N_PLAYERS
         flash_message(f'''{p["username"]} bid {p["bid"]}, 
-            {game['players'][game["current_player"]]} is now bidding''')
+            {game['players'][game["current_player"]]["username"]} is now bidding''')
         update_game(game)
         get_bid(game['game_id'], max_bid, first_bid=False)
 
@@ -235,18 +235,17 @@ def assign_landlord(game):
     winner, winner_loc = None, None
     current_high_bid = 0
     for i, p in enumerate(game['players']):
-        if p['bid'] > current_high_bid:
+        if p.get('bid', 0) > current_high_bid:
             current_high_bid = p['bid']
             winner = p
             winner_loc = i
     
-    flash_message(f'Bidding complete! The landlord is {p["username"]}')
+    flash_message(f'Bidding complete! The landlord is {winner["username"]}')
     game['current_player'] = winner_loc
     p['hand'] += game['blind']
     p['visible_cards'] += game['blind']
     game['landlord'] = p['username']
     update_game(game)
-    time.sleep(2)
     get_move(game['game_id'])
 
 
@@ -278,17 +277,17 @@ def add_move(data):
 
     discard = [int(x) for x in data['discard']]
     
-    valid_move, valid_discard = validate_move(game, move, discard)
-    if not (valid_move and valid_discard): 
-        # redo, get the same move
-        print('invalid move, resending submission', valid_move, valid_discard)
-        get_move(game['game_id'], retry=True)
-    else:
+    try:
+        valid_move, valid_discard = validate_move(game, move, discard)
         game['hand_type'] = valid_move
-        game['hand_history'].append((move, discard))
         game['discard_type'] = valid_discard
-        flash_message(
-            f'{p["username"]} played a {valid_move} with {valid_discard}')
+        if len(move) == 0:
+            flash_message(
+                f'{p["username"]} passed')
+        else:
+            game['hand_history'].append((move, discard))
+            flash_message(
+                f'{p["username"]} played a {valid_move} with {valid_discard}')
 
         print(p['hand'])
         for card in [*move, *discard]:
@@ -303,21 +302,31 @@ def add_move(data):
             print('advancing to next player')
             game['current_player'] = (game['current_player'] + 1) % N_PLAYERS
             update_game(game)
-            time.sleep(2)
             get_move(game['game_id'])
 
+    except Exception as e:
+        # redo, get the same move
+        print(e)
+        get_move(game['game_id'], retry=True)
 
 def validate_move(game, move, discard):
     """Takes in a game, attempted move, and attempted discard 
     and returns whether they are valid"""
     print('validating', move, discard)
+    if len(move) == 0 and len(discard) == 0:
+        # PASS 
+        if 'hand_type' in game:
+            return game['hand_type'], game['discard_type']
+        else:
+            raise Exception("attempted to pass on the first move")
+
     hand_type = validate_type(move)
     discard_type = validate_discard(discard, hand_type)
-    last_move = game['hand_history'][-1]
 
     if 'hand_type' in game:
         # there is already a round type, make sure it's valid
         if game['hand_type'] == hand_type and game['discard_type'] == discard_type:
+            last_move = game['hand_history'][-1]
             if sum(last_move[0]) >= sum(move):
                 raise Exception(f'Attempted move is weaker than last hand')
             else:
@@ -331,4 +340,3 @@ def validate_move(game, move, discard):
     else:
         # first move was invalid
         raise Exception(f'Attempted move was invalid move: {move} discard: {discard}')
-        return False, False

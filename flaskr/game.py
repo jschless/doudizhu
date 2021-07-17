@@ -99,7 +99,7 @@ def add_to_db(data):
 @socketio.on('debug')
 def debug(data):
     """For random functions I want to test out, so that I can activate them on click"""
-    run_game(data['game_id'])
+    run_round(data['game_id'])
     #update_game(get_game(data['game_id']))
 
 @socketio.on('disconnect')
@@ -110,8 +110,9 @@ def test_disconnect():
 def removeFromDB(data):
     print("Not implemented yet")
 
-def run_game(game_id):
-    print('running a game')
+@socketio.on("next round")
+def run_round(game_id):
+    print('running a round')
     initialize_game(game_id)
     get_bid(game_id, 0, first_bid=True)
 
@@ -157,8 +158,6 @@ def initialize_game(game_id):
 
     game['hand_history'] = []
 
-    # game['current_player'] = 0 # TEMPORARY for testing with one player
-    pprint(game)
     update_game(game)
 
 def get_bid(game_id, minimum: int, first_bid: bool = False):
@@ -287,7 +286,7 @@ def add_move(data):
             flash_message(
                 f'{p["username"]} passed')
         else:
-            game['hand_history'].append((move, discard))
+            game['hand_history'].append((move, discard, game['current_player']))
             flash_message(
                 f'{p["username"]} played a {valid_move} with {valid_discard}')
 
@@ -303,14 +302,20 @@ def add_move(data):
         else:
             # move onto the next player
             game['current_player'] = (game['current_player'] + 1) % N_PLAYERS
-            update_game(game)
-            flash_message(f'waiting on {game["players"][game["current_player"]]["username"]} to move', 
-                event='flash append')
-            get_move(game['game_id'])
+            if game['hand_history'][-1][2] == game['current_player']:
+                # the last move was by the current player
+                winner = game["players"][game["current_player"]]
+                flash_message(f'{winner["username"]} won that round... starting a new round in 10 seconds')
+                socketio.emit('round over', to=winner['socketid'])
+            else:
+                flash_message(f'waiting on {game["players"][game["current_player"]]["username"]} to move', 
+                    event='flash append')
+                update_game(game)
+                get_move(game['game_id'])
 
     except Exception as e:
         # redo, get the same move
-        print(e)
+        print(e, game)
         get_move(game['game_id'], retry=True)
 
 def validate_move(game, move, discard):

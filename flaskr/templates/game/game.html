@@ -58,6 +58,10 @@
         $('#move_stuff').show();
       });
 
+      socket.on('round over', function(winner){
+        setTimeout(() => socket.emit("next round", info.game_id), 10000);
+      });
+
       socket.on('flash', (m) => $("#flash").text(m).css('color', 'red'));
 
       socket.on('flash append', (m) => $("#flash").text(

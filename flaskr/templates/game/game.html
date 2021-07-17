@@ -60,6 +60,10 @@
 
       socket.on('flash', (m) => $("#flash").text(m).css('color', 'red'));
 
+      socket.on('flash append', (m) => $("#flash").text(
+        $("#flash").text() + ' , ' + m).css('color', 'red'));
+
+
       function drawBoard(data){
         console.log('received data to display', data);
 
@@ -72,24 +76,34 @@
         });
 
         $("#gameboard").append('<h2>Current Round</h2>',
-        $("<p></p>").text("Round Type: " + data['hand_type']))
+        $("<p></p>").text("Hand Type: " + data['hand_type']),
+        $("<p></p>").text("Discard Type: " + data['discard_type']))
 
         // Last hand 
         if (data['hand_history'].length > 0) {
           let lastMove = data['hand_history'][data['hand_history'].length-1]
           $("#gameboard").append('<div id="last_move"></div');
           $("#last_move").empty();
-          $("#last_move").append('<h2>Last Move</h2>');
-          lastMove[0].forEach(card => {
-            let img = $('<img />');
-            img.attr('id', card)
-            img.attr('src', '/static/card-images/' + cardToImage(card));
-            img.attr('width', '50px')
-            $("#last_move").append(img);
-          });
+          $("#last_move").append('<h4>Last Move</h4>');
+          addImages(lastMove[0], "#last_move")
+          if (lastMove[1].length > 0) {
+            $("#last_move").append('<br>');            
+            addImages(lastMove[1], "#last_move");
+          }
+          
         } 
         drawCards(data['hand']);
       }
+
+      function addImages(arr, jquery) {
+        arr.forEach(card => {
+          let img = $('<img />');
+          img.attr('id', card);
+          img.attr('src', '/static/card-images/' + cardToImage(card));
+          img.attr('width', '50px');
+          $(jquery).append(img);
+      });
+    }
 
       var hand = [];
       var discard = [];

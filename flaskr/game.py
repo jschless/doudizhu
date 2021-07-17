@@ -207,8 +207,6 @@ def generate_game_data(game, player):
                 })
 
         game_state['usernames'] = usernames
-    print('sending the following to', player['username'])
-    pprint(game_state)
     return game_state
 
 @socketio.on("submit bid")
@@ -260,12 +258,16 @@ def get_move(game_id, retry=False):
     socketio.emit('make move', to=p['socketid'])
     
 
-def flash_message(message: str, player=None) -> None:
-    """Displays a notification in red at the top of the client"""
+def flash_message(message: str, player=None, event='flash') -> None:
+    """Displays a notification in red at the top of the client
+    
+    event: "flash" -> rewrite to flash, "flash append" -> append toflash
+    player: pass players dict if you want to flash to a specific user
+    """
     if player:
-        socketio.emit('flash', message, to=player['socketid'])
+        socketio.emit(event, message, to=player['socketid'])
     else:
-        socketio.emit('flash', message)
+        socketio.emit(event, message)
 
 @socketio.on("submit move")
 def add_move(data):
@@ -289,19 +291,21 @@ def add_move(data):
             flash_message(
                 f'{p["username"]} played a {valid_move} with {valid_discard}')
 
-        print(p['hand'])
         for card in [*move, *discard]:
             p['hand'].remove(card)
         
         # check if the player has won 
         if len(p['hand']) == 0:
-            print('game is over')
+            flash_message(f'Round is over, {p["username"]} won', 
+                event='flash append')
+            print('game over')
             return 
         else:
             # move onto the next player
-            print('advancing to next player')
             game['current_player'] = (game['current_player'] + 1) % N_PLAYERS
             update_game(game)
+            flash_message(f'waiting on {game["players"][game["current_player"]]["username"]} to move', 
+                event='flash append')
             get_move(game['game_id'])
 
     except Exception as e:

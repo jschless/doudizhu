@@ -54,7 +54,7 @@ def create():
             
         elif 'join' in request.form:
             game_id = request.form['gamecode']
-            game = db.games.find_one({'game_id': game_id})
+            game = get_game(game_id)
             if game is None:
                 error = "No game exists with that code"
             elif session['_user_id'] in [x['user_id'] for x in game['players']]:
@@ -67,9 +67,7 @@ def create():
                     'username': current_user.username})
                 game['n_players'] += 1
                 print('adding player to game', game)
-                db.games.replace_one({'game_id': game_id}, game)
-                if game['n_players'] == 3:
-                    run_game(game_id)
+                update_game(game)
 
         ## TODO add a leave room option 
 
@@ -83,7 +81,6 @@ def create():
 def gameboard(id):
     db = get_db().ddz
     game = db.games.find_one({'game_id': id})
-    print(current_user)
     return render_template('game/game.html', game=game)
 
 @socketio.on('connect')
@@ -102,7 +99,6 @@ def add_to_db(data):
 @socketio.on('debug')
 def debug(data):
     """For random functions I want to test out, so that I can activate them on click"""
-    print('debug was clicked')
     run_game(data['game_id'])
     #  update_game(get_game(data['game_id']))
 

@@ -53,6 +53,7 @@
 
       socket.on('make move', function(){
         $("#move_flash").text("It's your move!").css('color', 'red');
+        lockCards = false;
         hand = [];
         discard = [];
         $('#move_stuff').show();
@@ -111,19 +112,15 @@
 
       var hand = [];
       var discard = [];
-      
+      let lockCards = true; 
+
       function drawCards(cards){
         $("#cards").empty();
-        cards.forEach(card => {
-          let img = $('<img />');
-          img.attr('id', card)
-          img.attr('src', '/static/card-images/' + cardToImage(card));
-          img.attr('width', '50px')
-          $("#cards").append(img);
-        });
+        addImages(cards, "#cards")
 
         $("img").mousedown(function(event) {
           // https://stackoverflow.com/questions/10170280/jquery-selecting-image
+          if (lockCards) return; // stop everyting unless it's your time to make a move
             switch (event.which) {
                 case 1:
                   if($(this).hasBorder()) {
@@ -160,6 +157,8 @@
         discard = [];
         $("#move_stuff").hide();
         $("#move_flash").text("");
+        $("img").css("border", "");
+        lockCards = true;
       }
 
       $("#submit_move").click(submitMove);

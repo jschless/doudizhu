@@ -1,8 +1,9 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+  <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
   <script type="text/javascript" charset="utf-8">
-
-    console.log('Javascript running')
+    $(document).ready(function(){
+      console.log('Javascript running')
       info = {game_id: '{{game.game_id}}',
               username: '{{current_user.username}}'};
 
@@ -14,34 +15,54 @@
 
       socket.on('disconnect', info);
 
-      socket.on('start game', function() {
-        console.log('starting game');
-        location.reload();
+      $("#debug").click(function(){
+        socket.emit('debug', info);
       });
 
-      socket.on('update gameboard', function() {
-        console.log('refreshing game');
-        location.reload();
-      });
-
-      socket.on('cards dealt', function() {
-        console.log('received cards');
-        location.reload();
+      socket.on('update gameboard', function(data) {
+        drawBoard(data)
       });
 
       socket.on('bid', function(){
         console.log('received bid request');
         let userBid = prompt("Enter your bid (0,1,2,3)");
         socket.emit('submit bid', {info, bid: userBid});
-        console.log('submitted bid');
+        console.log('submitted bid', userBid);
       });
 
       socket.on('make move', function(){
         console.log('received move request');
-        let userMove = prompt("Enter your move separated by commas");
-        socket.emit('submit move', {info, move: userMove});
+        let userMove = prompt("Enter your move separated by commas (no discards)");
+        let userDiscard = prompt("Enter your discards");
+        socket.emit('submit move', {info, move: userMove, discard: userDiscard});
       });
 
+      socket.on('flash', function(message){
+        console.log('flashing', message);
+        $("#flash").text(message).css('color', 'red');
+      });
+
+      function drawBoard(data){
+        console.log('received data to display', data);
+
+        $("#gameboard").empty();
+        $("#gameboard").append('<h2>Users currently in lobby:</h2>', 
+        '<ul></ul>'); 
+        $.each(data['usernames'], function(i){
+          $("#gameboard").append($("<li></li>").text(data['usernames'][i]));
+        });
+
+        console.log(data['hand'].join());
+
+        $("#gameboard").append('<h2>Your Hand</h2>', 
+        $("<p></p>").text(data['hand'].join()))
+
+        $("#gameboard").append('<h2>Current Round</h2>', 
+        $("<p></p>").text("Round Type", data['hand_type']),
+        $("<p></p>").text("Round History", data['hand_history']))
+      }
+  });
+  
   </script>
 {% extends 'base.html' %}
 
@@ -51,26 +72,9 @@
 
 {% block content %}
   <h1>Game ID: {{ game.game_id }} </h1>
-  <form method="post">
-    <input type="submit" name="start_game" value="Start Game">
-  </form>
-  <h2>Users currently in lobby:</h2>
-  <ul id="horizontal">
-    {% for user in game.players %}
-      <li> {{ user.username }}</li>
-    {% endfor %}
-  </ul>
+  <h2 id="flash"></h2>
+  <input id="debug" type="submit" name="start_game" value="Start Game">
 
-  <!-- Current user info -->
-
-  {% for p in game.players %}
-   <h2> {{p.username }} </h2>
-      <h3> Cards </h3>
-      <ul id="horizontal">
-        {% for card in p.hand %}
-          <li> {{card}} </li>
-        {% endfor %}
-      </ul>  
-  {% endfor %}
+  <div id="gameboard"></div>
 
 {% endblock %}

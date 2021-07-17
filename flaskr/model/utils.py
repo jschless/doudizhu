@@ -62,6 +62,8 @@ discard_moves = {
 }
 
 def validate_discard(cards, move_type):
+    if not move_type:
+        return False # if the move is not valid, the discard can't be 
     if len(cards) == 0:
         return 'no-discard'        
     n_discards = discard_moves[move_type]

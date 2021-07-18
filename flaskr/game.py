@@ -40,15 +40,7 @@ def create():
                 game_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
                 if db.games.find_one({'game_id': game_id}) is None:
                     # no existing game has this key
-                    record = {'game_id': game_id, 
-                              'players': [
-                                  {
-                                      'user_id': session['_user_id'], 
-                                      'username': current_user.username
-                                  }
-                                  ],
-                              'n_players': 1
-                              }
+                    record = {'game_id': game_id, 'players': []}
                     db.games.insert_one(record)
                     break
             
@@ -59,15 +51,17 @@ def create():
                 error = "No game exists with that code"
             elif session['_user_id'] in [x['user_id'] for x in game['players']]:
                 print('player re-entering room')
-            elif game['n_players'] == 3:
+            elif len(game['players']) == 3:
                 error = "Game is full"
             else:
-                game['players'].append({
-                    'user_id': session['_user_id'], 
-                    'username': current_user.username})
-                game['n_players'] += 1
-                print('adding player to game', game)
-                update_game(game)
+                # add player to game on connection
+                print('player has successfully joined')
+                # game['players'].append({
+                #     'user_id': session['_user_id'], 
+                #     'username': current_user.username})
+                # game['n_players'] += 1
+                # print('adding player to game', game)
+                # update_game(game)
 
         ## TODO add a leave room option 
 
@@ -85,15 +79,20 @@ def gameboard(id):
 
 @socketio.on('connect')
 def connectionMade():
-    print('Connection occured! with ', current_user.username, request.sid)
+    print('Connection occured! with type ', type(current_user), current_user.username, request.sid)
 
 @socketio.on('add to database')
 def add_to_db(data):
     game = get_game(data['game_id'])
-    for player in game['players']:
-        if player['username'] == data['username']:
-            print('added ', player['username'], 'socket id', request.sid)
-            player['socketid'] = request.sid
+
+    game['players'] = [p for p in game['players'] if p['username'] != current_user.username]
+
+    game['players'].append({
+        'user_id': session['_user_id'], 
+        'username': current_user.username,
+        'socketid': request.sid
+    })
+
     update_game(game)
 
 @socketio.on('debug')
@@ -104,11 +103,7 @@ def debug(data):
 
 @socketio.on('disconnect')
 def test_disconnect():
-    print('Client disconnected', current_user.username)
-
-@socketio.on('remove from database')
-def removeFromDB(data):
-    print("Not implemented yet")
+    print('Client disconnected', current_user) 
 
 @socketio.on("next round")
 def run_round(game_id):
@@ -174,6 +169,7 @@ def get_game(game_id):
 
 def update_game(game):
     """Send new game state to all players and update game DB record"""
+    pprint(game)
     for p in game['players']:
         socketio.emit('update gameboard', generate_game_data(game, p),
          to=p['socketid'])

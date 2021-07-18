@@ -8,12 +8,7 @@
               username: '{{current_user.username}}'};
 
       var socket = io();
-      socket.on('connect', function () {
-        console.log('connected with server')
-        socket.emit('add to database', info);
-      });
-
-      socket.on('disconnect', info);
+      socket.on('connect', () => socket.emit('add to database', info));
 
       $("#debug").click(function(){
         socket.emit('debug', info);
@@ -26,6 +21,7 @@
       $('#bidding').hide()
       socket.on('bid', function(max_bid){
         console.log('received bid request with minimum', max_bid);
+        //startTimer(15, 'pass-bid');
         var radios = [0];
         if (max_bid < 1 ) radios.push(1)
         if (max_bid < 2) radios.push(2)
@@ -54,6 +50,7 @@
       socket.on('make move', function(){
         $("#move_flash").text("It's your move!").css('color', 'red');
         lockCards = false;
+        startTimer(15, 'pass-move');
         hand = [];
         discard = [];
         $('#move_stuff').show();
@@ -68,7 +65,11 @@
       socket.on('flash append', (m) => $("#flash").text(
         $("#flash").text() + ' , ' + m).css('color', 'red'));
 
-
+      socket.on('timer update', 
+          (seconds) => {
+            console.log('received', seconds);
+            $("#timer").text(seconds.toString() + " remaining");
+          });
       function drawBoard(data){
         console.log('received data to display', data);
 
@@ -113,6 +114,7 @@
       var hand = [];
       var discard = [];
       let lockCards = true; 
+      let timerStarted = false;
 
       function drawCards(cards){
         $("#cards").empty();
@@ -152,9 +154,11 @@
       }
 
       function submitMove(){
+        clearInterval(x);
         socket.emit('submit move', {info: info, move: hand, discard: discard});
         hand = [];
         discard = [];
+        $("#timer").text("");
         $("#move_stuff").hide();
         $("#move_flash").text("");
         $("img").css("border", "");
@@ -200,6 +204,45 @@
               return false;
           }
       };
+      let x;
+
+      function startTimer(nSeconds, action){
+        // Begin a countdown 
+        let start = new Date().getTime();
+
+        x = setInterval(function() {
+
+          // Get today's date and time
+          let now = new Date().getTime();
+        
+          // Find the distance between now and the count down date
+          let distance = now - start;
+        
+          let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+          socket.emit('timer update', nSeconds - seconds);
+          $("#timer").text("Seconds left to make move: " + (nSeconds - seconds).toString())
+       
+          // If the count down is finished, write some text
+          if (seconds > nSeconds) {
+            console.log('Ran out of time');
+            clearInterval(x);
+            $("#timer").text("Time is up")
+            if (action == "pass-move") {
+              hand = [];
+              discard = [];
+              submitMove();
+            }
+            else if (action == "pass-bid") {
+              socket.emit('submit bid', {info, bid: 0});
+            }
+          }
+        }, 1000);
+
+        // Every second communicate to other client's what the countdown is at 
+
+        // When countdown is over, do a pass (whether that is on bidding or playing)
+
+      };
     });
   </script>
 {% extends 'base.html' %}
@@ -209,6 +252,7 @@
   <h2 id="flash"></h2>
   <input id="debug" type="submit" name="start_game" value="Start Game">
 
+  <h2 id="timer"></h2>
   <div id="gameboard"></div>
 
   <h2>Your Hand</h2>
@@ -217,7 +261,7 @@
   </div>
   <div id="move_stuff">
     <input id="submit_move" type="submit" name="submit move" value="Submit Move">
-    <input id="pass_move" type="submit" name="submit bid" value="Pass">  
+    <input id="pass_move" type="submit" name="pass move" value="Pass">  
   </div>
 
   <div id="bidding">

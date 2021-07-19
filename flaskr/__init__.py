@@ -11,8 +11,9 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        # DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
     )
+
+    # app.config["MONGO_URI"] = "mongodb+srv://joeschless:805858joe@cluster0.t4ie6.mongodb.net/ddz?retryWrites=true&w=majority"
     app.config["MONGO_URI"] = "mongodb://localhost:27017/"
 
     socketio.init_app(app)
@@ -26,12 +27,6 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-
-    # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return "hello" 
-
     from . import db 
     db.init_app(app)
 
@@ -40,13 +35,6 @@ def create_app(test_config=None):
 
     from . import game
     app.register_blueprint(game.bp)
-
-    @app.route('/')
-    def index():
-        return "index"
-
-    return app
-
 
 app = create_app()
 

@@ -97,6 +97,7 @@ def debug(data):
 def test_disconnect():
     print('Client disconnected', current_user) 
 
+@socketio.on('next round')
 def run_round(game_id):
     print('running a round')
     initialize_game(game_id)
@@ -230,12 +231,13 @@ def assign_landlord(game):
     game['current_player'] = winner_loc
     game['winning_bid'] = current_high_bid
     winner['hand'] += game['blind']
+    winner['hand'] = sorted(winner['hand'])
     winner['visible_cards'] += game['blind']
     game['landlord'] = winner['username']
     update_game(game)
     get_move(game['game_id'])
 
-@socketio.on("next round")
+@socketio.on("next hand")
 def get_move(game_id, retry=False):
     game = get_game(game_id)
     p = game['players'][game['current_player']] # it's this person's move
@@ -270,6 +272,11 @@ def add_move(data):
     
     try:
         valid_move, valid_discard = validate_move(game, move, discard)
+    except Exception as e:
+        # redo, get the same move
+        print(e, game)
+        get_move(game['game_id'], retry=True)
+    else:
         game['hand_type'] = valid_move
         game['discard_type'] = valid_discard
         if len(move) == 0:
@@ -285,7 +292,7 @@ def add_move(data):
             if card in p['visible_cards']:
                 p['visible_cards'].remove(card)
         
-        # check if the player has won 
+        # check if the player has just won 
         if len(p['hand']) == 0:
             flash_message(f'Round is over, {p["username"]} won', 
                 event='flash append')
@@ -297,22 +304,18 @@ def add_move(data):
             if game['hand_history'][-1][2] == game['current_player']:
                 # the last move was by the current player
                 winner = game["players"][game["current_player"]]
-                flash_message(f'{winner["username"]} won that round... starting a new round in 10 seconds')
+                flash_message(f'{winner["username"]} won that hand')
                 del game['hand_type'] 
                 del game['discard_type'] 
                 game['hand_history'] = []
                 update_game(game)
-                socketio.emit('round over', to=winner['socketid'])
+                socketio.emit('hand over', to=winner['socketid'])
             else:
                 flash_message(f'waiting on {game["players"][game["current_player"]]["username"]} to move', 
                     event='flash append')
                 update_game(game)
                 get_move(game['game_id'])
 
-    except Exception as e:
-        # redo, get the same move
-        print(e, game)
-        get_move(game['game_id'], retry=True)
 
 def update_scoreboard(game: dict, winning_player: dict):
     """Updates the scores after the round is over"""
@@ -324,7 +327,11 @@ def update_scoreboard(game: dict, winning_player: dict):
             game['scoreboard'][u] = game['scoreboard'].get(u, 0) + 2*bid*landlord_won
         else:
             game['scoreboard'][u] = game['scoreboard'].get(u, 0) - bid*landlord_won
+    print('game at end of round')
+    pprint(game)
     update_game(game)
+    run_round(game['game_id'])
+    
 
 def validate_move(game, move, discard):
     """Takes in a game, attempted move, and attempted discard 

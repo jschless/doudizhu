@@ -56,8 +56,8 @@
         $('#move_stuff').show();
       });
 
-      socket.on('round over', function(winner){
-        setTimeout(() => socket.emit("next round", info.game_id), 3000);
+      socket.on('hand over', function(winner){
+        setTimeout(() => socket.emit("next hand", info.game_id), 300);
       });
 
       socket.on('flash', (m) => $("#flash").text(m).css('color', 'red'));

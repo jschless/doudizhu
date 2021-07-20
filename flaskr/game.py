@@ -69,8 +69,8 @@ def gameboard(id):
     return render_template('game/game.html', game=game)
 
 @socketio.on('connect')
-def connectionMade(opt=None):
-    print('Connection occured! with type ', type(current_user), current_user.username, request.sid, opt)
+def connectionMade():
+    print('Connection occured! with type ', type(current_user), current_user.username, request.sid)
 
 
 @socketio.on('add to database')
@@ -97,7 +97,6 @@ def debug(data):
 def test_disconnect():
     print('Client disconnected', current_user) 
 
-@socketio.on("next round")
 def run_round(game_id):
     print('running a round')
     initialize_game(game_id)
@@ -161,7 +160,7 @@ def get_game(game_id):
 
 def update_game(game):
     """Send new game state to all players and update game DB record"""
-    pprint(game)
+    # pprint(game)
     for p in game['players']:
         socketio.emit('update gameboard', generate_game_data(game, p),
          to=p['socketid'])
@@ -174,7 +173,7 @@ def generate_game_data(game, player):
         'hand_type': game.get('hand_type', 'None'),
         'discard_type': game.get('discard_type', 'None'),
         'hand_history': game.get('hand_history', []),
-        'scoreboard': game.get('scoreboard', [])
+        'scoreboard': game.get('scoreboard', {})
     }
 
     usernames = []
@@ -230,13 +229,13 @@ def assign_landlord(game):
     flash_message(f'Bidding complete! The landlord is {winner["username"]}')
     game['current_player'] = winner_loc
     game['winning_bid'] = current_high_bid
-    p['hand'] += game['blind']
-    p['visible_cards'] += game['blind']
-    game['landlord'] = p['username']
+    winner['hand'] += game['blind']
+    winner['visible_cards'] += game['blind']
+    game['landlord'] = winner['username']
     update_game(game)
     get_move(game['game_id'])
 
-
+@socketio.on("next round")
 def get_move(game_id, retry=False):
     game = get_game(game_id)
     p = game['players'][game['current_player']] # it's this person's move
@@ -291,7 +290,6 @@ def add_move(data):
             flash_message(f'Round is over, {p["username"]} won', 
                 event='flash append')
             update_scoreboard(game, p)
-            print('game over')
             return 
         else:
             # move onto the next player
@@ -300,6 +298,10 @@ def add_move(data):
                 # the last move was by the current player
                 winner = game["players"][game["current_player"]]
                 flash_message(f'{winner["username"]} won that round... starting a new round in 10 seconds')
+                del game['hand_type'] 
+                del game['discard_type'] 
+                game['hand_history'] = []
+                update_game(game)
                 socketio.emit('round over', to=winner['socketid'])
             else:
                 flash_message(f'waiting on {game["players"][game["current_player"]]["username"]} to move', 

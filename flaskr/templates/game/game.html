@@ -50,14 +50,14 @@
       socket.on('make move', function(){
         $("#move_flash").text("It's your move!").css('color', 'red');
         lockCards = false;
-        startTimer(15, 'pass-move');
+        //startTimer(15, 'pass-move'); 
         hand = [];
         discard = [];
         $('#move_stuff').show();
       });
 
       socket.on('round over', function(winner){
-        setTimeout(() => socket.emit("next round", info.game_id), 10000);
+        setTimeout(() => socket.emit("next round", info.game_id), 3000);
       });
 
       socket.on('flash', (m) => $("#flash").text(m).css('color', 'red'));
@@ -70,15 +70,23 @@
             console.log('received', seconds);
             $("#timer").text(seconds.toString() + " remaining");
           });
+
+      function get(object, key, default_value) {
+        //https://stackoverflow.com/questions/44184794/what-is-the-javascript-equivalent-of-pythons-get-method-for-dictionaries/44185289
+        var result = object[key];
+        return (typeof result !== "undefined") ? result : default_value;
+      }
+
       function drawBoard(data){
         console.log('received data to display', data);
 
         $("#gameboard").empty();
-        $("#gameboard").append('<h2>Users currently in lobby:</h2>', 
-        '<ul></ul>'); 
+        $("#gameboard").append('<h2>Scoreboard:</h2>', '<ul></ul>'); 
 
         $.each(data['usernames'], function(i){
-          $("#gameboard").append($("<li></li>").text(data['usernames'][i]));
+          $("#gameboard").append($("<li></li>").text(
+            data['usernames'][i] + ' : ' + get(data['scoreboard'], data['usernames'][i], 0)
+            ));
         });
         
         $("#gameboard").append('<h2>Current Round</h2>',

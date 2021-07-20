@@ -22,14 +22,13 @@ from .model.player import Player
 
 from .model.utils import validate_type, validate_discard
 
-N_PLAYERS = 3
+N_PLAYERS = 3 # can be set to one to test game with just one client
 
 bp = Blueprint('game', __name__, url_prefix='/')
 
-@bp.route('/create', methods=('GET', 'POST'))
+@bp.route('', methods=('GET', 'POST'))
 @login_required
 def create():
-    print('happening')
     if request.method == 'POST':
         error = None
         game = None
@@ -40,10 +39,9 @@ def create():
                 game_id = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
                 if db.games.find_one({'game_id': game_id}) is None:
                     # no existing game has this key
-                    record = {'game_id': game_id, 'players': []}
+                    record = {'game_id': game_id, 'players': [], 'scoreboard': {}}
                     db.games.insert_one(record)
-                    break
-            
+                    break            
         elif 'join' in request.form:
             game_id = request.form['gamecode']
             game = get_game(game_id)
@@ -56,12 +54,6 @@ def create():
             else:
                 # add player to game on connection
                 print('player has successfully joined')
-                # game['players'].append({
-                #     'user_id': session['_user_id'], 
-                #     'username': current_user.username})
-                # game['n_players'] += 1
-                # print('adding player to game', game)
-                # update_game(game)
 
         ## TODO add a leave room option 
 
@@ -73,8 +65,7 @@ def create():
 
 @bp.route('/<id>', methods=('GET', 'POST'))
 def gameboard(id):
-    db = get_db().ddz
-    game = db.games.find_one({'game_id': id})
+    game = get_game(id)
     return render_template('game/game.html', game=game)
 
 @socketio.on('connect')
@@ -181,7 +172,8 @@ def generate_game_data(game, player):
         'other_players': [], 
         'hand_type': game.get('hand_type', 'None'),
         'discard_type': game.get('discard_type', 'None'),
-        'hand_history': game.get('hand_history', [])
+        'hand_history': game.get('hand_history', []),
+        'scoreboard': game.get('scoreboard', [])
     }
 
     usernames = []
@@ -235,6 +227,7 @@ def assign_landlord(game):
     
     flash_message(f'Bidding complete! The landlord is {winner["username"]}')
     game['current_player'] = winner_loc
+    game['winning_bid'] = current_high_bid
     p['hand'] += game['blind']
     p['visible_cards'] += game['blind']
     game['landlord'] = p['username']
@@ -293,6 +286,7 @@ def add_move(data):
         if len(p['hand']) == 0:
             flash_message(f'Round is over, {p["username"]} won', 
                 event='flash append')
+            update_scoreboard(game, p)
             print('game over')
             return 
         else:
@@ -313,6 +307,18 @@ def add_move(data):
         # redo, get the same move
         print(e, game)
         get_move(game['game_id'], retry=True)
+
+def update_scoreboard(game: dict, winning_player: dict):
+    """Updates the scores after the round is over"""
+    bid = game['winning_bid'] 
+    landlord_won = 1 if winning_player['username'] == game['landlord'] else -1
+    for p in game['players']:
+        u = p['username']
+        if u == game['landlord']:
+            game['scoreboard'][u] = game['scoreboard'].get(u, 0) + 2*bid*landlord_won
+        else:
+            game['scoreboard'][u] = game['scoreboard'].get(u, 0) - bid*landlord_won
+    update_game(game)
 
 def validate_move(game, move, discard):
     """Takes in a game, attempted move, and attempted discard 

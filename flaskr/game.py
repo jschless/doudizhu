@@ -69,8 +69,9 @@ def gameboard(id):
     return render_template('game/game.html', game=game)
 
 @socketio.on('connect')
-def connectionMade():
-    print('Connection occured! with type ', type(current_user), current_user.username, request.sid)
+def connectionMade(opt=None):
+    print('Connection occured! with type ', type(current_user), current_user.username, request.sid, opt)
+
 
 @socketio.on('add to database')
 def add_to_db(data):
@@ -189,8 +190,9 @@ def generate_game_data(game, player):
             game_state['hand'] = p.get('hand', [])
         else:
             game_state['other_players'].append({
+                'username': p['username'],
                 'n_cards': len(p.get('hand', [])),
-                'visible_cards': []
+                'visible_cards': p.get('visible_cards', [])
                 })
 
         game_state['usernames'] = usernames
@@ -281,6 +283,8 @@ def add_move(data):
 
         for card in [*move, *discard]:
             p['hand'].remove(card)
+            if card in p['visible_cards']:
+                p['visible_cards'].remove(card)
         
         # check if the player has won 
         if len(p['hand']) == 0:

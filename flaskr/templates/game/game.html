@@ -80,10 +80,13 @@
         $.each(data['usernames'], function(i){
           $("#gameboard").append($("<li></li>").text(data['usernames'][i]));
         });
-
+        
         $("#gameboard").append('<h2>Current Round</h2>',
         $("<p></p>").text("Hand Type: " + data['hand_type']),
         $("<p></p>").text("Discard Type: " + data['discard_type']))
+
+        $("#gameboard").append('<h2 id="#otherhands">Other Players</h2>')
+        drawOtherCards(data['other_players'], '#gameboard');
 
         // Last hand 
         if (data['hand_history'].length > 0) {
@@ -108,6 +111,20 @@
           img.attr('src', '/static/card-images/' + cardToImage(card));
           img.attr('width', '50px');
           $(jquery).append(img);
+      });
+    }
+
+    function drawOtherCards(otherPlayers, jquery) {
+      otherPlayers.forEach(data => {
+        cardArr = new Array();
+        for (let x=0; x<data['n_cards']; x++){
+          if (x<data['visible_cards'].length)
+            cardArr.push(data['visible_cards'][x]);
+          else 
+            cardArr.push(0); // hidden card
+        }
+        $(jquery).append($('<h2></h2').text(data['username']))
+        addImages(cardArr, jquery)
       });
     }
 
@@ -180,12 +197,13 @@
         14: "1",
         15: "2",
         16: "joker_black",
-        17: "joker_red"
+        17: "joker_red",
+        0: "back-black"
       }
 
       function cardToImage(card){
         // Takes a card (int) and gets the card picture
-        if (card == 16 | card == 17) {
+        if (card == 16 | card == 17 | card == 0) {
           return card_to_string[card] + '.png'
         }
         else if (card in card_to_string) {

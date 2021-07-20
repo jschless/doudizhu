@@ -345,15 +345,15 @@ def validate_move(game, move, discard):
         if game['hand_type'] == hand_type and game['discard_type'] == discard_type:
             last_move = game['hand_history'][-1]
             if sum(last_move[0]) >= sum(move):
-                raise Exception(f'Attempted move is weaker than last hand')
+                raise RuntimeError(f'Attempted move is weaker than last hand')
             else:
                 return hand_type, discard_type
         else:
-            raise Exception(f'''Hand type and discard type did not match what was required
+            raise RuntimeError(f'''Hand type and discard type did not match what was required
              ({hand_type} !=  {game["hand_type"]} or {discard_type} != {game["discard_type"]}''')
     elif hand_type and discard_type:
         # set the first move
         return hand_type, discard_type
     else:
         # first move was invalid
-        raise Exception(f'Attempted move was invalid move: {move} discard: {discard}')
+        raise RuntimeError(f'Attempted move was invalid move: {move} discard: {discard}')

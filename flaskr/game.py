@@ -17,10 +17,7 @@ from flask_login import current_user, login_required
 from flask_socketio import emit
 from flaskr.db import get_db
 
-from .model.game import Game
-from .model.player import Player
-
-from .model.utils import validate_type, validate_discard
+from .utils import validate_type, validate_discard
 
 N_PLAYERS = 3 # can be set to one to test game with just one client
 

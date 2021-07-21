@@ -293,6 +293,11 @@ def add_move(data):
             if card in p['visible_cards']:
                 p['visible_cards'].remove(card)
         
+        if ((valid_move == "quad" and valid_discard == "no-discard") 
+            or (valid_move == "rocket")):
+            # double the bid on a bomb
+            game['winning_bid'] = 2*game['winning_bid']
+
         # check if the player has just won 
         if len(p['hand']) == 0:
             flash_message(f'Round is over, {p["username"]} won', 

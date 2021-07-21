@@ -56,7 +56,7 @@ def login():
                 
         if error is None:
             # print('redirecting to', next, next or url_for(''), url_for(''))
-            return redirect(next or url_for('game.'))
+            return redirect(next or url_for('game.create'))
 
         flash(error)
 
@@ -66,4 +66,4 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('game.create'))

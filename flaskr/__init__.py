@@ -13,8 +13,8 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
     )
 
-    # app.config["MONGO_URI"] = "mongodb+srv://joeschless:805858joe@cluster0.t4ie6.mongodb.net/ddz?retryWrites=true&w=majority"
-    app.config["MONGO_URI"] = "mongodb://localhost:27017/"
+    app.config["MONGO_URI"] = "mongodb+srv://joeschless:805858joe@cluster0.t4ie6.mongodb.net/ddz?retryWrites=true&w=majority"
+    # app.config["MONGO_URI"] = "mongodb://localhost:27017/"
 
     socketio.init_app(app)
 

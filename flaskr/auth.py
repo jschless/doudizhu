@@ -28,6 +28,7 @@ def login():
         user = User()
         user.username = form.username.data
         user.password = form.password.data
+        user.password_hash = generate_password_hash(user.password)
         error = None
 
         if 'create' in request.form:
@@ -54,8 +55,8 @@ def login():
                     error = "Incorrect credentials"
                 
         if error is None:
-            print('redirecting to', next, next or url_for('index'), url_for('index'))
-            return redirect(next or url_for('index'))
+            # print('redirecting to', next, next or url_for(''), url_for(''))
+            return redirect(next or url_for('game.'))
 
         flash(error)
 

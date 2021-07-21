@@ -63,6 +63,7 @@ def create():
         flash(error)
     return render_template('game/create_game.html')
 
+@login_required
 @bp.route('/<id>', methods=('GET', 'POST'))
 def gameboard(id):
     game = get_game(id)
@@ -355,6 +356,10 @@ def validate_move(game, move, discard):
                 raise RuntimeError(f'Attempted move is weaker than last hand')
             else:
                 return hand_type, discard_type
+        elif hand_type == "quad" and discard_type == "no-discard":
+            return "quad", "no-discard"
+        elif hand_type == "rocket" and discard_type == "no-discard":
+            return "rocket", "no-discard"
         else:
             raise RuntimeError(f'''Hand type and discard type did not match what was required
              ({hand_type} !=  {game["hand_type"]} or {discard_type} != {game["discard_type"]}''')

@@ -5,6 +5,8 @@ from flask_pymongo import PyMongo
 from flask_socketio import SocketIO, emit
 from flask_login import LoginManager
 
+from .config import mongodb_uri
+
 socketio = SocketIO()
 login_manager = LoginManager()
 def create_app(test_config=None):
@@ -13,12 +15,10 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
     )
 
-    app.config["MONGO_URI"] = "mongodb+srv://joeschless:805858joe@cluster0.t4ie6.mongodb.net/ddz?retryWrites=true&w=majority"
-    # app.config["MONGO_URI"] = "mongodb://localhost:27017/"
+    app.config["MONGO_URI"] = mongodb_uri
 
     socketio.init_app(app)
 
-    # login_manager = LoginManager()
     login_manager.login_view = "auth.login"
 
     # ensure the instance folder exists

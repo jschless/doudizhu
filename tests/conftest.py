@@ -5,27 +5,20 @@ import pytest
 from flaskr import create_app
 from flaskr.db import get_db, init_db
 
-with open(os.path.join(os.path.dirname(__file__), 'data.sql'), 'rb') as f:
-    _data_sql = f.read().decode('utf8')
-
 
 @pytest.fixture
 def app():
-    db_fd, db_path = tempfile.mkstemp()
-
     app = create_app({
         'TESTING': True,
-        'DATABASE': db_path,
+        'MONGO_URI': "mongodb://localhost:27017/",
+        'SECRET_KEY': 'dev'
     })
 
     with app.app_context():
         init_db()
-        get_db().executescript(_data_sql)
+        get_db()
 
     yield app
-
-    os.close(db_fd)
-    os.unlink(db_path)
 
 
 @pytest.fixture
@@ -41,10 +34,10 @@ class AuthActions(object):
     def __init__(self, client):
         self._client = client
 
-    def login(self, username='test', password='test'):
+    def login(self, username='testing', password='testing'):
         return self._client.post(
             '/auth/login',
-            data={'username': username, 'password': password}
+            data={'username': username, 'password': password, 'login': 'Log in'}
         )
 
     def logout(self):

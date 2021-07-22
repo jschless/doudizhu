@@ -23,6 +23,7 @@ def load_user(user_id):
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     form = LoginForm(request.form)
+    print("testing debug, form", request.form, 'request', request.headers, 'form', form)
     if request.method == 'POST' and form.validate():
         db = get_db().ddz
         user = User()
@@ -59,6 +60,8 @@ def login():
             return redirect(next or url_for('game.create'))
 
         flash(error)
+    else:
+        flash('Please fill out the form properly. Usernames must be 4 characters!')
 
     return render_template('auth/login.html', form=form)
 

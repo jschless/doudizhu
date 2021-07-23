@@ -11,5 +11,7 @@
     "python.testing.unittestEnabled": false,
     "python.pythonPath": "venv/bin/python",
     "python.testing.promptToConfigure": false,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "python.formatting.provider": "autopep8",
+    "editor.formatOnSave": true
 }

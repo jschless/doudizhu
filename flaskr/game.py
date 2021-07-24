@@ -40,7 +40,7 @@ def create():
             except KeyError:
                 error = "No game exists with that code"
             else:
-                if session['_user_id'] in [x['user_id'] for x in game.players]:
+                if current_user in game.players:
                     print('player re-entering room')
                 elif len(game.players) == 3:
                     error = "Game is full"
@@ -82,9 +82,9 @@ def connectionMade():
 @ socketio.on('add to database')
 def add_to_db(data):
     if current_user.is_authenticated:
-        print('connection made', current_user.username)
+        current_user.update_sid(request.sid)
         game = Game(data['game_id'])
-        game.add_player_to_db(current_user, session, request)
+        game.add_player_to_game(current_user)
     else:
         print('Refusing connection with unauthenticated user')
         return False  # not allowed here
@@ -94,7 +94,7 @@ def add_to_db(data):
 def disconnect_user():
     game_id = request.referrer[-5:]
     game = Game(game_id)
-    # game.remove_player_from_db(current_user)
+    # game.remove_player_from_game(current_user)
 
 
 @ socketio.on('debug')

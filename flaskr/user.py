@@ -11,6 +11,10 @@ class User(UserMixin):
         self.username = username
         self.password_hash = password_hash
         self.game_id = None
+        self.sid = None
+        self.hand = []
+        self.visible_cards = []
+        self.bid = None
 
     @classmethod
     def from_record(cls, record):
@@ -32,12 +36,12 @@ class User(UserMixin):
         except AttributeError:
             return None
 
-    def __dict__(self):
-        return {
-            'username': self.username,
-            'password_hash': self.password_hash,
-            'game_id': self.game_id
-        }
+    def as_dict(self):
+        dict_vars = ['username', 'password_hash', 'game_id', 'sid', 'hand',
+        'visible_cards', 'bid']
+        temp = {k: getattr(self, k) for k in dict_vars}
+        temp['_id'] = ObjectId(self._id)
+        return temp
 
     @classmethod
     def get(cls, user_id):
@@ -62,7 +66,7 @@ class User(UserMixin):
     def update_db(self):
         """Updates the user entry in the database"""
         get_db().ddz.users.replace_one(
-            {'username': self.username}, self.__dict__())
+            {'username': self.username}, self.as_dict())
 
     def save(self):
         error = None
@@ -71,7 +75,7 @@ class User(UserMixin):
         else:
             db = get_db().ddz
             user_id = db.users.insert_one(self.__dict__()).inserted_id
-            self.id = str(user_id)
+            self._id = str(user_id)
         return error
 
     def join_game(self, game_id):
@@ -80,8 +84,17 @@ class User(UserMixin):
             self.game_id = game_id
             self.update_db()
         elif game_id != self.game_id:
-            raise RuntimeError("User is already in a game")
+            self.game_id = game_id
+            # TODO leave other game
+            # raise RuntimeError("User is already in a game")
         print(f'{self.username} joining game {self.game_id}')
 
     def leave_game(self, game_id):
         self.game_id = None
+
+    def __eq__(self, other):
+        return self.username == other.username
+
+    def update_sid(self, sid):
+        self.sid = sid
+        self.update_db()

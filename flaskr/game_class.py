@@ -4,6 +4,7 @@ import string
 from flaskr.db import get_db
 from flaskr.socket_utils import send_socket, flash_message
 from flaskr.utils import validate_type, validate_discard
+from flaskr.user import User
 
 
 class Game:
@@ -39,7 +40,7 @@ class Game:
 
         return cls(game_id)
 
-    def add_player_to_db(self, user, session, request):
+    def add_player_to_db(self, user: User, session, request):
         self.players = [
             p for p in self.players if p['username'] != user.username]
 
@@ -49,6 +50,14 @@ class Game:
             'socketid': request.sid
         })
 
+        user.join_game(self.game_id)
+        self.update()
+
+    def remove_player_from_db(self, user: User):
+        """On disconnect, we remove the player from the database"""
+        self.players = [
+            p for p in self.players if p['username'] != user.username]
+        user.leave_game()
         self.update()
 
     def update(self):

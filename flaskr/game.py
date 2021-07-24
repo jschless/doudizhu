@@ -74,31 +74,33 @@ def gameboard(id):
 
 @ socketio.on('connect')
 def connectionMade():
-    # if current_user.is_authenticated:
-    #     emit('my response',
-    #          {'message': '{0} has joined'.format(current_user.name)},
-    #          broadcast=True)
-    # else:
-    #     return False  # not allowed here
-    print('connection made', current_user)
-    # print('Connection occured! with type ', type(current_user), current_user.username, request.sid)
+    pass
+    # print('Connection occured! with type ', type(
+    #     current_user), current_user.username, request.sid)
 
 
 @ socketio.on('add to database')
 def add_to_db(data):
-    game = Game(data['game_id'])
-    game.add_player_to_db(current_user, session, request)
+    if current_user.is_authenticated:
+        print('connection made', current_user.username)
+        game = Game(data['game_id'])
+        game.add_player_to_db(current_user, session, request)
+    else:
+        print('Refusing connection with unauthenticated user')
+        return False  # not allowed here
+
+
+@ socketio.on('disconnect')
+def disconnect_user():
+    game_id = request.referrer[-5:]
+    game = Game(game_id)
+    # game.remove_player_from_db(current_user)
 
 
 @ socketio.on('debug')
 def debug(data):
     """For random functions I want to test out, so that I can activate them on click"""
     run_round(data['game_id'])
-
-
-@ socketio.on('disconnect')
-def test_disconnect():
-    print('Client disconnected', current_user)
 
 
 @ socketio.on('next round')

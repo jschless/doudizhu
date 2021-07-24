@@ -1,7 +1,7 @@
 import functools
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, 
+    Blueprint, flash, g, redirect, render_template,
     request, session, url_for, abort, send_from_directory
 )
 
@@ -16,25 +16,24 @@ from .user import User
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.get(user_id)
 
+
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
     form = LoginForm(request.form)
-    print("testing debug, form", request.form, 'request', request.headers, 'form', form)
     if request.method == 'POST' and form.validate():
         db = get_db().ddz
-        user = User()
-        user.username = form.username.data
-        user.password = form.password.data
-        user.password_hash = generate_password_hash(user.password)
+        password = form.password.data
+        user = User(form.username.data, generate_password_hash(password))
         error = None
 
         if 'create' in request.form:
             print('User created')
-            error = user.save() 
+            error = user.save()
 
         if 'login' in request.form or error is None:
             # Check credentials
@@ -44,7 +43,8 @@ def login():
                 error = "Username does not exist"
             else:
                 # username exists, validate password
-                correct_password = check_password_hash(record['password_hash'], user.password)
+                correct_password = check_password_hash(
+                    record['password_hash'], password)
                 if correct_password:
                     # password is correct, set the id and login
                     user.id = str(record['_id'])
@@ -54,7 +54,7 @@ def login():
                         next = request.args.get('next')
                 else:
                     error = "Incorrect credentials"
-                
+
         if error is None:
             # print('redirecting to', next, next or url_for(''), url_for(''))
             return redirect(next or url_for('game.create'))
@@ -64,6 +64,7 @@ def login():
         flash('Please fill out the form properly. Usernames must be 4 characters!')
 
     return render_template('auth/login.html', form=form)
+
 
 @bp.route("/logout")
 @login_required

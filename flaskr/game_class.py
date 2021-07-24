@@ -311,8 +311,10 @@ class Game:
             if u == self.landlord:
                 self.scoreboard[u] = self.scoreboard.get(
                     u, 0) + 2*bid*landlord_won
+                p.update_scoreboard(2*bid*landlord_won)
             else:
                 self.scoreboard[u] = self.scoreboard.get(
                     u, 0) - bid*landlord_won
+                p.update_scoreboard(-bid*landlord_won)
         self.update()
         self.initialize_round()

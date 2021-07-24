@@ -15,6 +15,7 @@ class User(UserMixin):
         self.hand = []
         self.visible_cards = []
         self.bid = None
+        self.lifetime_score = 0
 
     @classmethod
     def from_record(cls, record):
@@ -97,4 +98,8 @@ class User(UserMixin):
 
     def update_sid(self, sid):
         self.sid = sid
+        self.update_db()
+
+    def update_scoreboard(self, score):
+        self.lifetime_score += score
         self.update_db()

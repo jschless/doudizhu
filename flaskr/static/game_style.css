@@ -1,0 +1,85 @@
+.animated-grid {
+    height: 85vh;
+    margin-bottom: 200px;
+  
+    display: grid;
+    gap: 1rem;
+  
+    /* Explicit grid */
+    grid-template-areas:
+      'gameid title scoreboard'
+      'player1 playing-area  player2'
+      'history  current-player chat';
+  
+    grid-template-rows: 20% 50% 30%;
+    grid-template-columns: 400px auto 400px;
+  
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #07ca18;
+    /* font-size: 1em; */
+    color: #fff;
+    box-shadow: rgba(3, 8, 20, 0.1) 0px 0.15rem 0.5rem, rgba(2, 8, 20, 0.1) 0px 0.075rem 0.175rem;
+    height: 100%;
+    width: 100%;
+    border-radius: 4px;
+    transition: all 500ms;
+    overflow: hidden;
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+ }
+  
+/* .card:hover {
+    box-shadow: rgba(2, 8, 20, 0.1) 0px 0.35em 1.175em, rgba(2, 8, 20, 0.08) 0px 0.175em 0.5em;
+    transform: translateY(-3px) scale(1.1);
+} */
+
+  .gameid {
+    grid-area: gameid
+
+  }
+  
+  .title {
+    grid-area: title;
+  }
+
+  .scoreboard {
+    grid-area: scoreboard;
+  }
+  .player1 {
+    grid-area: player1;
+  }
+  .playing-area {
+    grid-area: playing-area;
+  }
+
+  .player2 {
+    grid-area: player2;
+  }
+  .history {
+    grid-area: history;
+  }
+  .current-player {
+    grid-area: current-player;
+    background: #817777;
+  }
+
+  .chat {
+    grid-area: chat;
+  }
+
+  .playing-card {
+    /* padding: 10px; */
+    width: 20%;
+  }
+
+  .my-playing-card {
+    margin: 0px 0px 10px 10px;
+    width: 5%;
+  }

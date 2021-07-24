@@ -1,51 +1,6 @@
-<!DOCTYPE html>
-<html>
-     <head>
-        <meta charset="utf-8">
-        <title>Dou Dizhu</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-        <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
-        <script src="{{url_for('static', filename='utils.js')}}"></script>
-        <link rel="stylesheet" href="{{ url_for('static', filename='game_style.css') }}">
+import {cardToImage, getOtherCards, addImages, get} from "./utils.js";
 
-      </head>
-  <body>
-<section class="animated-grid">
-  <div class="card gameid">gameid</div>
-  <div class="card title">title</div>
-  <div class="card scoreboard">
-    scoreboard
-  </div>
-  <div class="card player1">player1</div>
-  <div class="card playing-area">
-    playing-area
-    <h2 id="flash"></h2>
-    <input id="debug" type="submit" name="start_game" value="Start Game">
-  </div>
-  <div class="card player2">player2</div>
-  <div class="card history">history</div>
-  <div class="card current-player">
-    <div id="move_flash"></div>
-    
-    <div id="cards"></div>
-
-    <div id="move_stuff">
-      <input id="submit_move" type="submit" name="submit move" value="Submit Move">
-      <input id="pass_move" type="submit" name="pass move" value="Pass">  
-    </div>
-
-    <div id="bidding">
-      <h2>Make your bid</h2>
-    </div>
-  </div>
-  <div class="card chat">chat</div>
-</section>
-
-</body>
-</html>
-
-<script>
-  $(document).ready(function() {
+$(document).ready(function(){
 
     let info = {game_id: '{{game.game_id}}',
                 username: '{{current_user.username}}'};
@@ -56,10 +11,6 @@
 
     socket.on('update gameboard', (gameboard) => drawGame(gameboard));
     
-    $("#debug").click(function(){
-      socket.emit('debug', info);
-    });
-
     socket.on('bid', function(max_bid){
         //startTimer(15, 'pass-bid');
         let radios = [0];
@@ -110,28 +61,7 @@
         submitMove();
     });
 
-    function submitMove(){
-      //clearInterval(x);
-      socket.emit('submit move', {info: info, move: hand, discard: discard});
-      hand = [];
-      discard = [];
-      $("#timer").text("");
-      $("#move_stuff").hide();
-      $("#move_flash").text("");
-      $("img").css("border", "");
-      lockCards = true;
-    }
-    
-    $("#submit_move").click(submitMove);
-
-    $("#pass_move").click(function(){
-      hand = [];
-      discard = [];
-      submitMove();
-    });
-
     function drawGame(gameboard) {
-      console.log(gameboard)
         // GAMEID  section
         $('.gameid').empty()
             .append(
@@ -202,7 +132,6 @@
                     return true;
             } else { return false; }
         };
-  }
 });
 
-</script>
+

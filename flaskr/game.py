@@ -67,8 +67,7 @@ def icon():
 @ bp.route('/<id>', methods=('GET', 'POST'))
 def gameboard(id):
     print('gameboard id', id)
-    game = Game(id).__dict__
-    print('sending game to template', game)
+    game = Game(id).to_mongo()
     return render_template('game/game.html', game=game)
 
 

@@ -28,7 +28,7 @@ class Game:
         
 
         default_vars = [('hand_type', None), ('discard_type', None),
-                        ('hand_history', [])]
+                        ('hand_history', []), ('bid', None)]
         for var_name, default_value in default_vars:
             if not hasattr(self, var_name):
                 setattr(self, var_name, default_value)
@@ -82,6 +82,8 @@ class Game:
         """Create a dict to send to the client that includes relevant data"""
         game_state = {
             'other_players': [],
+            'game_id': self.game_id,
+            'bid': self.bid,
             'hand_type': self.hand_type,
             'discard_type': self.discard_type,
             'hand_history': self.hand_history,

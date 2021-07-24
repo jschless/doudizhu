@@ -93,8 +93,7 @@ def add_to_db(data):
 @ socketio.on('debug')
 def debug(data):
     """For random functions I want to test out, so that I can activate them on click"""
-    game = Game(data['game_id'])
-    game.initialize_round()
+    run_round(data['game_id'])
 
 
 @ socketio.on('disconnect')
@@ -104,18 +103,8 @@ def test_disconnect():
 
 @ socketio.on('next round')
 def run_round(game_id):
-    print('running a round')
-    initialize_game(game_id)
-
-
-def initialize_game(game_id):
     game = Game(game_id)
     game.initialize_round()
-
-
-def get_bid(game_id, minimum: int, first_bid: bool = False):
-    game = Game(game_id)
-    game.get_bid()
 
 
 @ socketio.on("submit bid")

@@ -299,5 +299,4 @@ class Game:
                 self.scoreboard[u] = self.scoreboard.get(
                     u, 0) - bid*landlord_won
         self.update()
-
         self.initialize_round()

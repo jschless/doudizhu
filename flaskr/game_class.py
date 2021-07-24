@@ -126,7 +126,7 @@ class Game:
                     del p[key]
 
         self.update()
-        self.get_bid()
+        self.get_bid(minimum=-1)
 
     # Bidding Section
 
@@ -210,6 +210,10 @@ class Game:
                         or (valid_move == "rocket")):
                     # double the bid on a bomb
                     self.winning_bid = 2*self.winning_bid
+
+            # move onto the next move
+            self.update()
+            self.determine_next_move(p)
 
     def determine_next_move(self, p):
         # check if the player has just won

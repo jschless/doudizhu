@@ -154,7 +154,7 @@ class Game:
         """Requests a bid from the next player who needs to bid"""
         p = self.players[self.current_player]
         if first_bid:
-            flash_message(f'{p.username} is now bidding')
+            flash_message(f'{p.username} is now bidding', address=self.game_id)
         send_socket('bid', minimum, p.sid)
 
     def register_bid(self, data):
@@ -168,7 +168,7 @@ class Game:
         else:
             self.advance_player()
             flash_message(f'''{p.username} bid {p.bid}, 
-                {self.players[self.current_player].username} is now bidding''')
+                {self.players[self.current_player].username} is now bidding''', address=self.game_id)
             self.update()
             self.get_bid()
 
@@ -181,7 +181,7 @@ class Game:
             raise ValueError("Everyone passed, you should reshuffle")
 
         flash_message(
-            f'Bidding complete! The landlord is {str(winner)}')
+            f'Bidding complete! The landlord is {str(winner)}', address=self.game_id)
         self.current_player = winner_loc
         self.winning_bid = winner.bid
 
@@ -196,7 +196,7 @@ class Game:
     def get_move(self, retry=False):
         p = self.players[self.current_player]
         if retry:
-            flash_message('Invalid move attempt, try again', player=p)
+            flash_message('Invalid move attempt, try again', address=p.sid)
         send_socket('make move', None, p.sid)
 
     def register_move(self, data):
@@ -214,11 +214,11 @@ class Game:
             self.hand_type = valid_move
             self.discard_type = valid_discard
             if len(move) == 0:
-                flash_message(f'{str(p)} passed')
+                flash_message(f'{str(p)} passed', address=self.game_id)
             else:
                 self.hand_history.append((move, discard, self.current_player))
                 flash_message(
-                    f'{str(p)} played a {valid_move} with {valid_discard}')
+                    f'{str(p)} played a {valid_move} with {valid_discard}', address=self.game_id)
 
                 p.last_move = move 
                 p.last_discard = discard
@@ -240,7 +240,7 @@ class Game:
         # check if the player has just won
         if len(p.hand) == 0:
             flash_message(f'Round is over, {str(p)} won',
-                          event='flash append')
+                          event='flash append', address=self.game_id)
             self.update_scoreboard(p)
             return
         else:
@@ -249,14 +249,14 @@ class Game:
             if self.hand_history[-1][2] == self.current_player:
                 # the last move was by the current player
                 winner = self.players[self.current_player]
-                flash_message(f'{str(winner)} won that hand')
+                flash_message(f'{str(winner)} won that hand', address=self.game_id)
                 self.reset_hand_data()
                 self.update()
                 send_socket('hand over', None, winner.sid)
             else:
                 flash_message(
                     f'waiting on {str(self.players[self.current_player])} to move',
-                    event='flash append')
+                    event='flash append', address=self.game_id)
                 self.update()
                 self.get_move()
 

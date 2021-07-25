@@ -14,7 +14,7 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flask_login import current_user, login_required
-from flask_socketio import emit
+from flask_socketio import emit, join_room
 from flaskr.db import get_db
 
 from .utils import validate_type, validate_discard
@@ -84,6 +84,7 @@ def add_to_db(data):
         current_user.update_sid(request.sid)
         game = Game(data['game_id'])
         game.add_player_to_game(current_user)
+        join_room(data['game_id'])
     else:
         print('Refusing connection with unauthenticated user')
         return False  # not allowed here
@@ -127,6 +128,6 @@ def add_move(data):
 
 
 @socketio.on('chat')
-def received_chat(json, methods=['GET', 'POST']):
-    print('received chat', json)
-    socketio.emit('chat broadcast', json)
+def received_chat(data, methods=['GET', 'POST']):
+    print('received chat', data)
+    socketio.emit('chat broadcast', data, to=data['game_id'])

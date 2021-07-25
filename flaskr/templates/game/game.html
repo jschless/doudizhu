@@ -230,6 +230,7 @@
     e.preventDefault()
     let user_input = $( 'input.message' ).val()
     socket.emit('chat', {
+      ...info,
       user_name: info.username,
       message: user_input
     } )

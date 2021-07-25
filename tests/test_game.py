@@ -1,5 +1,5 @@
 import pytest
-
+import time
 
 def test_create_game(client, auth):
     auth.login()
@@ -7,11 +7,24 @@ def test_create_game(client, auth):
     response = client.post(
         '/', data={'create': 'Create Game'}, follow_redirects=True)
 
-    print(response.headers, response.data)
-    assert response == True
+    assert response._status_code == 200
 
-# from selenium.webdriver import Chrome
-# import pytest
 
-# with Chrome(executable_path='/home/joe/chromedriver/chromedriver') as driver:
-#     driver.get('http://127.0.0.1:5000/')
+def test_connection_and_add_to_db(app, client, socketio_server, auth):
+    test_game = "XM1P8"
+    data = {'game_id': test_game, 'username': 'testing'}
+    auth.login()
+    response = client.post('/', 
+        data={'join': 'Join Game', 'gamecode': test_game}, 
+        follow_redirects=True)
+
+    socket_client = socketio_server.test_client(app, flask_test_client=client)
+
+    assert socket_client.is_connected() == True
+    socket_client.emit('add to database', data)
+
+    for m in socket_client.get_received():
+        if m['name'] == 'update_gameboard':
+            assert 'testing' in m['args'][0]['usernames']
+        elif m['name'] == 'message':
+            assert f"successfully added {data['username']} to database" == m['args']

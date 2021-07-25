@@ -78,7 +78,8 @@ def add_to_db(data):
         game = Game(data['game_id'])
         game.add_player_to_game(current_user)
         join_room(data['game_id'])
-    else:
+        socketio.send(f"successfully added {data['username']} to database")
+    else:        
         print('Refusing connection with unauthenticated user')
         return False  # not allowed here
 

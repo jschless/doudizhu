@@ -2,7 +2,7 @@ import os
 import tempfile
 
 import pytest
-from flaskr import create_app
+from flaskr import create_app, socketio
 from flaskr.db import get_db, init_db
 
 
@@ -20,10 +20,13 @@ def app():
 
     yield app
 
-
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+@pytest.fixture
+def socketio_server():
+    return socketio
 
 
 @pytest.fixture

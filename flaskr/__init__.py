@@ -20,9 +20,6 @@ def create_app(test_config=None):
             MONGO_URI=mongodb_uri
         )
 
-    socketio.init_app(app)
-
-
     login_manager.init_app(app) 
     login_manager.login_view = "auth.login"
 
@@ -41,6 +38,9 @@ def create_app(test_config=None):
     from . import game
     app.register_blueprint(game.bp)
 
+    socketio.init_app(app)
+
     return app
 
-app = create_app()
+if __name__ == "flaskr":
+    app = create_app()

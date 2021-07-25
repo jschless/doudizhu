@@ -11,6 +11,6 @@ def flash_message(message: str, player=None, event='flash') -> None:
     player: pass players dict if you want to flash to a specific user
     """
     if player:
-        socketio.emit(event, message, to=player['socketid'])
+        socketio.emit(event, message, to=player.sid)
     else:
         socketio.emit(event, message)

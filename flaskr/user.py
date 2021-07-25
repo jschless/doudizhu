@@ -16,6 +16,8 @@ class User(UserMixin):
         self.visible_cards = []
         self.bid = None
         self.lifetime_score = 0
+        self.last_move = []
+        self.last_discard = []
 
     @classmethod
     def from_record(cls, record):

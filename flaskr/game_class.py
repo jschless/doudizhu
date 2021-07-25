@@ -28,7 +28,7 @@ class Game:
         
 
         default_vars = [('hand_type', None), ('discard_type', None),
-                        ('hand_history', []), ('bid', None)]
+                        ('hand_history', []), ('winning_bid', None)]
         for var_name, default_value in default_vars:
             if not hasattr(self, var_name):
                 setattr(self, var_name, default_value)
@@ -83,7 +83,7 @@ class Game:
         game_state = {
             'other_players': [],
             'game_id': self.game_id,
-            'bid': self.bid,
+            'winning_bid': self.winning_bid,
             'hand_type': self.hand_type,
             'discard_type': self.discard_type,
             'hand_history': self.hand_history,
@@ -105,7 +105,9 @@ class Game:
                 game_state['other_players'].append({
                     'username': p.username,
                     'n_cards': len(p.hand),
-                    'visible_cards': p.visible_cards
+                    'visible_cards': p.visible_cards,
+                    'last_move': p.last_move,
+                    'last_discard': p.last_discard
                 })
 
             game_state['usernames'] = usernames
@@ -141,7 +143,6 @@ class Game:
         self.discard_type = None
         self.hand_history = []
 
-        print('before and after update')
         self.update()
         self.get_bid(minimum=-1)
 
@@ -149,10 +150,7 @@ class Game:
 
     def get_bid(self, minimum: int, first_bid: bool = False):
         """Requests a bid from the next player who needs to bid"""
-        print(self.players)
         p = self.players[self.current_player]
-        print(p)
-        # print('Sending bid request to ', p['username'], p['socketid'])
         if first_bid:
             flash_message(f'{p.username} is now bidding')
         send_socket('bid', minimum, p.sid)
@@ -219,6 +217,8 @@ class Game:
                 flash_message(
                     f'{str(p)} played a {valid_move} with {valid_discard}')
 
+                p.last_move = move 
+                p.last_discard = discard
                 for card in [*move, *discard]:
                     p.hand.remove(card)
                     if card in p.visible_cards:

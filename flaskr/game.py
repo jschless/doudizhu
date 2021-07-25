@@ -110,17 +110,17 @@ def run_round(game_id):
 
 @ socketio.on("submit bid")
 def add_bid(data):
-    game = Game(data['info']['game_id'])
+    game = Game(data['game_id'])
     game.register_bid(data)
 
 
 @ socketio.on("next hand")
-def get_move(game_id):
-    game = Game(game_id)
+def get_move(data):
+    game = Game(data['game_id'])
     game.get_move()
 
 
 @ socketio.on("submit move")
 def add_move(data):
-    game = Game(data['info']['game_id'])
+    game = Game(data['game_id'])
     game.register_move(data)

@@ -11,19 +11,19 @@
       </head>
   <body>
 <section class="animated-grid">
-  <div class="card gameid">gameid</div>
-  <div class="card title">title</div>
-  <div class="card scoreboard">
-    scoreboard
-  </div>
-  <div class="card player1">player1</div>
+  <div class="card gameid"></div>
+  <div class="card title"></div>
+  <div class="card scoreboard"></div>
+  <div class="card player1"></div>
   <div class="card playing-area">
-    playing-area
-    <h2 id="flash"></h2>
     <input id="debug" type="submit" name="start_game" value="Start Game">
+    <h2 id="flash"></h2>
+    <div class="waiting-room">
+      <h2>Waiting for more players to join! Share the game code ({{game['game_id']}}) and they can join this game.</h2>
+    </div>
   </div>
-  <div class="card player2">player2</div>
-  <div class="card history">history</div>
+  <div class="card player2"></div>
+  <div class="card history"></div>
   <div class="card current-player">
     <div id="move_flash"></div>
     
@@ -34,11 +34,9 @@
       <input id="pass_move" type="submit" name="pass move" value="Pass">  
     </div>
 
-    <div id="bidding">
-      <h2>Make your bid</h2>
-    </div>
+    <div id="bidding"></div>
   </div>
-  <div class="card chat">chat</div>
+  <div class="card chat"></div>
 </section>
 
 </body>
@@ -51,6 +49,9 @@
                 username: '{{current_user.username}}'};
 
     let socket = io();
+
+    let discard = [], hand = [];
+
     
     socket.on('connect', () => socket.emit('add to database', info));
 
@@ -62,11 +63,11 @@
 
     socket.on('bid', function(max_bid){
         //startTimer(15, 'pass-bid');
+        $('#bidding').empty().append('<h2>Make your bid</h2>')
         let radios = [0];
         if (max_bid < 1 ) radios.push(1)
         if (max_bid < 2) radios.push(2)
         radios.push(3)
-
         radios.forEach(value => {
           $('#bidding')
           .append(`<input type="radio" id="${value}" name="bid" value="${value}">`)
@@ -79,7 +80,7 @@
         $('#bidding').show()
         $('#submit_bid').click(function() {
           let bid = $('input[name="bid"]:checked').val();
-          socket.emit('submit bid', {info, bid: bid});
+          socket.emit('submit bid', {...info, bid: bid});
           $('#bidding').hide()
         });
     });
@@ -102,6 +103,9 @@
     socket.on('flash append', 
         (m) => $("#flash").text($("#flash").text() + ' , ' + m).css('color', 'red'));
 
+    $('#bidding').hide()
+    $('#move_stuff').hide()
+
     $("#submit_move").click(submitMove);
 
     $("#pass_move").click(function(){
@@ -112,7 +116,7 @@
 
     function submitMove(){
       //clearInterval(x);
-      socket.emit('submit move', {info: info, move: hand, discard: discard});
+      socket.emit('submit move', {...info, move: hand, discard: discard});
       hand = [];
       discard = [];
       $("#timer").text("");
@@ -166,14 +170,10 @@
         addImages(visibleCards, ".player2");
         
         // This player section
-        let discard = [], hand = [];
         $(".current-player #cards").empty()
             // .append('<h2>' + "My Hand" + '</h2>')
             // .css('text-align', 'center');
-        addImages(gameboard.hand, ".current-player #cards", 20, "my-playing-card");
-        $('#bidding').hide();
-        $('#move_stuff').hide();
-    
+        addImages(gameboard.hand, ".current-player #cards", 20, "my-playing-card");    
     
         $(".my-playing-card").click( function() {
             console.log('clicked')

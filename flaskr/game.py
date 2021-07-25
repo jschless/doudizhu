@@ -69,14 +69,7 @@ def gameboard(id):
     print('gameboard id', id)
     game = Game(id).to_mongo()
     return render_template('game/game.html', game=game)
-
-
-@ socketio.on('connect')
-def connectionMade():
-    pass
-    # print('Connection occured! with type ', type(
-    #     current_user), current_user.username, request.sid)
-
+    
 
 @ socketio.on('add to database')
 def add_to_db(data):

@@ -78,3 +78,26 @@
   margin: 0px 0px 10px 10px;
   width: 75px;
 }
+
+#container {
+  width: 640px; /* Can be in percentage also. */
+  height: auto;
+  margin: 0 auto;
+  padding: 10px;
+  position: relative;
+}
+
+.left {
+  float: left;
+  margin-right: auto;
+}
+
+.right {
+  float: right;
+  margin-left: auto;
+}
+
+.bottom {
+  float: bottom;
+  margin-top: auto;
+}

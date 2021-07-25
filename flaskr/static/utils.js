@@ -58,3 +58,7 @@ function addImages(arr, jquery, chunk=5, classname="playing-card") {
     }
 }
 
+function addMove(move, discard, jquery) {
+    addImages(move, jquery, chunk=move.length);
+    addImages(discard, jquery, chunk=move.length);
+}

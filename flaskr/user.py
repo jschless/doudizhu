@@ -41,7 +41,7 @@ class User(UserMixin):
 
     def as_dict(self):
         dict_vars = ['username', 'password_hash', 'game_id', 'sid', 'hand',
-        'visible_cards', 'bid']
+        'visible_cards', 'bid', 'last_move', 'last_discard']
         temp = {k: getattr(self, k) for k in dict_vars}
         temp['_id'] = ObjectId(self._id)
         return temp

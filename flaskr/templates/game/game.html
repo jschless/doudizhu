@@ -21,9 +21,9 @@
       <h2>Waiting for more players to join! Share the game code ({{game['game_id']}}) and they can join this game.</h2>
     </div>
     <h2 id="flash"></h2>
-    <div class="left">test</div>
-    <div class="right">test2</div>
-    <div class="bottom">test3</div>
+    <div class="left" id="player1-move"></div>
+    <div class="right" id="player2-move"></div>
+    <div class="bottom" id="current-player-move"></div>
   </div>
   <div class="card player2"></div>
   <div class="card history"></div>
@@ -90,8 +90,6 @@
 
     socket.on('make move', function(){
         $("#move_flash").text("It's your move!").css('color', 'red');
-        lockCards = false;
-        //startTimer(15, 'pass-move'); 
         hand = [];
         discard = [];
         $('#move_stuff').show();
@@ -108,14 +106,6 @@
 
     $('#bidding').hide()
     $('#move_stuff').hide()
-
-    $("#submit_move").click(submitMove);
-
-    $("#pass_move").click(function(){
-        hand = [];
-        discard = [];
-        submitMove();
-    });
 
     function submitMove(){
       //clearInterval(x);
@@ -165,13 +155,34 @@
         $(".player1").empty().append('<h2>' + gameboard.other_players[0].username + '</h2>');
         let visibleCards = getOtherCards(gameboard.other_players[0]);
         addImages(visibleCards, ".player1");
+
+        $('#player1-move').empty()
+        addMove(
+          get(gameboard.other_players[0], 'last_move', []),
+          get(gameboard.other_players[0], 'last_discard', []),
+          "#player1-move"
+        )
         
     
         // PLAYER 2 section
         $(".player2").empty().append('<h2>' + gameboard.other_players[1].username + '</h2>');
         visibleCards = getOtherCards(gameboard.other_players[1]);
         addImages(visibleCards, ".player2");
-        
+
+        $('#player2-move').empty()
+        addMove(
+          get(gameboard.other_players[1], 'last_move', []),
+          get(gameboard.other_players[1], 'last_discard', []),
+          "#player2-move"
+        )
+
+        $('#current-player-move').empty()
+        addMove(
+          get(gameboard, 'last_move', []),
+          get(gameboard, 'last_discard', []),
+          "#current-player-move"
+        )
+
         // This player section
         $(".current-player #cards").empty()
             // .append('<h2>' + "My Hand" + '</h2>')

@@ -101,6 +101,8 @@ class Game:
                 usernames.append(p.username)
             if p.username == player.username:
                 game_state['hand'] = p.hand
+                game_state['last_move'] = p.last_move
+                game_state['last_discard'] = p.last_discard
             else:
                 game_state['other_players'].append({
                     'username': p.username,
@@ -201,6 +203,7 @@ class Game:
         p = self.players[self.current_player]
         move = [int(x) for x in data['move']]
         discard = [int(x) for x in data['discard']]
+        print('registering move from ', str(p), move, discard)
 
         try:
             valid_move, valid_discard = self.validate_move(move, discard)

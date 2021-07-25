@@ -39,7 +39,14 @@
 
     <div id="bidding"></div>
   </div>
-  <div class="card chat"></div>
+  <div class="card chat">
+    <h3>Chat Room</h3>
+    <div class="messages"></div>
+    <form action="" method="POST">
+      <input type="text" class="message" placeholder="Message"/>
+      <input type="submit"/>
+    </form>
+  </div>
 </section>
 
 </body>
@@ -216,10 +223,26 @@
                     return true;
             } else { return false; }
         };
-
-        // Playing area, should put moves in front of each player
-        //$(".playing-area").append('div')
   }
+
+  // CHAT        
+  let form = $( 'form' ).on( 'submit', function( e ) {
+    e.preventDefault()
+    let user_input = $( 'input.message' ).val()
+    socket.emit('chat', {
+      user_name: info.username,
+      message: user_input
+    } )
+    $( 'input.message' ).val( '' ).focus()
+  })
+
+  socket.on( 'chat broadcast', function( msg ) {
+    if( typeof msg.user_name !== 'undefined' ) {
+      $( 'h3' ).remove()
+      $( '.messages' ).append( '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>' )
+    }
+  });
+
 });
 
 </script>

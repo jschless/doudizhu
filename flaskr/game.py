@@ -124,3 +124,9 @@ def get_move(data):
 def add_move(data):
     game = Game(data['game_id'])
     game.register_move(data)
+
+
+@socketio.on('chat')
+def received_chat(json, methods=['GET', 'POST']):
+    print('received chat', json)
+    socketio.emit('chat broadcast', json)

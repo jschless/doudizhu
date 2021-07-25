@@ -1,10 +1,10 @@
 import os
-import tempfile
 
 import pytest
+
 from flaskr import create_app, socketio
 from flaskr.db import get_db, init_db
-
+from flaskr.game_class import Game
 
 @pytest.fixture
 def app():
@@ -28,6 +28,10 @@ def client(app):
 def socketio_server():
     return socketio
 
+@pytest.fixture
+def test_game(app):
+    with app.app_context():
+        return Game("XM1P8")
 
 @pytest.fixture
 def runner(app):

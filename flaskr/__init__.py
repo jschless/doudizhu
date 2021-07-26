@@ -5,7 +5,7 @@ from flask_pymongo import PyMongo
 from flask_socketio import SocketIO, emit
 from flask_login import LoginManager
 
-from .config import mongodb_uri
+from .config import mongodb_uri, secret
 
 socketio = SocketIO()
 login_manager = LoginManager()
@@ -16,7 +16,7 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
     else:
         app.config.from_mapping(
-            SECRET_KEY='dev',
+            SECRET_KEY=secret,
             MONGO_URI=mongodb_uri
         )
 

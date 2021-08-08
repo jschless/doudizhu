@@ -4,8 +4,6 @@ from flask import Flask
 from flask_socketio import SocketIO
 from flask_login import LoginManager
 
-from .config import mongodb_uri, secret
-
 socketio = SocketIO()
 login_manager = LoginManager()
 
@@ -16,7 +14,9 @@ def create_app(test_config=None):
     if test_config is not None:
         app.config.from_mapping(test_config)
     else:
-        app.config.from_mapping(SECRET_KEY=secret, MONGO_URI=mongodb_uri)
+        app.config.from_mapping(
+            SECRET_KEY=os.environ["secret"], MONGO_URI=os.environ["mongodb_uri"]
+        )
 
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"

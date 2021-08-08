@@ -96,15 +96,8 @@ class Game:
             "scoreboard": self.scoreboard,
         }
 
-        usernames = []
+        usernames = [p.username for p in self.players]
         for p in self.players:
-            if hasattr(self, "landlord"):
-                if p == self.landlord:
-                    usernames.append(p.username + " (landlord)")
-                else:
-                    usernames.append(p.username + " (peasant)")
-            else:
-                usernames.append(p.username)
             if p.username == player.username:
                 game_state["hand"] = p.hand
                 game_state["last_move"] = p.last_move
@@ -120,7 +113,7 @@ class Game:
                     }
                 )
 
-            game_state["usernames"] = usernames
+        game_state["usernames"] = usernames
         return game_state
 
     def initialize_round(self):
@@ -217,7 +210,6 @@ class Game:
         p = self.players[self.current_player]
         move = [int(x) for x in data["move"]]
         discard = [int(x) for x in data["discard"]]
-        print("registering move from ", str(p), move, discard)
 
         try:
             valid_move, valid_discard = self.validate_move(move, discard)
@@ -286,7 +278,7 @@ class Game:
     def validate_move(self, move, discard):
         """Takes in an attempted move and attempted discard
         and returns whether they are valid"""
-        print("validating", move, discard)
+
         if len(move) == 0 and len(discard) == 0:  # PASS
             if self.hand_type:
                 return self.hand_type, self.discard_type
@@ -332,7 +324,7 @@ class Game:
         self.discard_type = None
         self.hand_history = []
 
-    def update_scoreboard(self, winning_player):
+    def update_scoreboard(self, winning_player: User):
         """Updates the scores after the round is over"""
         bid = self.winning_bid
         landlord_won = 1 if winning_player == self.landlord else -1

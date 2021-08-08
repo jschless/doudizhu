@@ -170,7 +170,7 @@ class Game:
             flash_message(f'''{p.username} bid {p.bid}, 
                 {self.players[self.current_player].username} is now bidding''', address=self.game_id)
             self.update()
-            self.get_bid()
+            self.get_bid(minimum=max_bid)
 
     def assign_landlord(self):
         """Determines who the landlord is"""

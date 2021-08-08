@@ -323,6 +323,10 @@ class Game:
         self.hand_type = None
         self.discard_type = None
         self.hand_history = []
+        for p in self.players:
+            p.last_move = []
+            p.last_discard = []
+
 
     def update_scoreboard(self, winning_player: User):
         """Updates the scores after the round is over"""

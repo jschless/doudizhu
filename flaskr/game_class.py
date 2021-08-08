@@ -10,32 +10,34 @@ from flaskr.user import User
 class Game:
     def __init__(self, game_id):
         """Creates a game given a game_id (MongoDB record)"""
-        record = get_db().ddz.games.find_one({'game_id': game_id})
+        record = get_db().ddz.games.find_one({"game_id": game_id})
         if record is None:
-            print('record not found with game_id', game_id)
+            print("record not found with game_id", game_id)
             raise KeyError
 
         for key, value in record.items():
-            if key == 'landlord':
+            if key == "landlord":
                 self.landlord = User.from_record(value)
             else:
                 setattr(self, key, value)
 
         self.players = []
-        for p in record['players']:
+        for p in record["players"]:
             self.players.append(User.from_record(p))
 
-        
-
-        default_vars = [('hand_type', None), ('discard_type', None),
-                        ('hand_history', []), ('winning_bid', None)]
+        default_vars = [
+            ("hand_type", None),
+            ("discard_type", None),
+            ("hand_history", []),
+            ("winning_bid", None),
+        ]
         for var_name, default_value in default_vars:
             if not hasattr(self, var_name):
                 setattr(self, var_name, default_value)
 
     def to_mongo(self):
         mongo_record = {}
-        for k,v in self.__dict__.items():
+        for k, v in self.__dict__.items():
             if k == "players":
                 mongo_record[k] = [p.as_dict() for p in v]
             elif k == "landlord":
@@ -44,17 +46,17 @@ class Game:
                 mongo_record[k] = v
         return mongo_record
 
-
     @classmethod
     def create_game(cls):
         """Creates a game"""
         db = get_db().ddz
         while True:
-            game_id = ''.join(random.choices(
-                string.ascii_uppercase + string.digits, k=5))
-            if db.games.find_one({'game_id': game_id}) is None:
+            game_id = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=5)
+            )
+            if db.games.find_one({"game_id": game_id}) is None:
                 # no existing game has this key
-                record = {'game_id': game_id, 'players': [], 'scoreboard': {}}
+                record = {"game_id": game_id, "players": [], "scoreboard": {}}
                 db.games.insert_one(record)
                 break
 
@@ -73,46 +75,52 @@ class Game:
         self.update()
 
     def update(self):
-        """Updates the MongoDB record and sends a new gamestate to all connected users"""
+        """Updates the MongoDB record
+
+        and sends a new gamestate to all connected users"""
         for p in self.players:
-            send_socket('update gameboard', self.generate_game_data(p), p.sid)
-        return get_db().ddz.games.replace_one({'game_id': self.game_id}, self.to_mongo())
+            send_socket("update gameboard", self.generate_game_data(p), p.sid)
+        return get_db().ddz.games.replace_one(
+            {"game_id": self.game_id}, self.to_mongo()
+        )
 
     def generate_game_data(self, player):
         """Create a dict to send to the client that includes relevant data"""
         game_state = {
-            'other_players': [],
-            'game_id': self.game_id,
-            'winning_bid': self.winning_bid,
-            'hand_type': self.hand_type,
-            'discard_type': self.discard_type,
-            'hand_history': self.hand_history,
-            'scoreboard': self.scoreboard
+            "other_players": [],
+            "game_id": self.game_id,
+            "winning_bid": self.winning_bid,
+            "hand_type": self.hand_type,
+            "discard_type": self.discard_type,
+            "hand_history": self.hand_history,
+            "scoreboard": self.scoreboard,
         }
 
         usernames = []
         for p in self.players:
-            if hasattr(self, 'landlord'):
+            if hasattr(self, "landlord"):
                 if p == self.landlord:
-                    usernames.append(p.username + ' (landlord)')
+                    usernames.append(p.username + " (landlord)")
                 else:
-                    usernames.append(p.username + ' (peasant)')
+                    usernames.append(p.username + " (peasant)")
             else:
                 usernames.append(p.username)
             if p.username == player.username:
-                game_state['hand'] = p.hand
-                game_state['last_move'] = p.last_move
-                game_state['last_discard'] = p.last_discard
+                game_state["hand"] = p.hand
+                game_state["last_move"] = p.last_move
+                game_state["last_discard"] = p.last_discard
             else:
-                game_state['other_players'].append({
-                    'username': p.username,
-                    'n_cards': len(p.hand),
-                    'visible_cards': p.visible_cards,
-                    'last_move': p.last_move,
-                    'last_discard': p.last_discard
-                })
+                game_state["other_players"].append(
+                    {
+                        "username": p.username,
+                        "n_cards": len(p.hand),
+                        "visible_cards": p.visible_cards,
+                        "last_move": p.last_move,
+                        "last_discard": p.last_discard,
+                    }
+                )
 
-            game_state['usernames'] = usernames
+            game_state["usernames"] = usernames
         return game_state
 
     def initialize_round(self):
@@ -154,12 +162,12 @@ class Game:
         """Requests a bid from the next player who needs to bid"""
         p = self.players[self.current_player]
         if first_bid:
-            flash_message(f'{p.username} is now bidding', address=self.game_id)
-        send_socket('bid', minimum, p.sid)
+            flash_message(f"{p.username} is now bidding", address=self.game_id)
+        send_socket("bid", minimum, p.sid)
 
     def register_bid(self, data):
         p = self.players[self.current_player]
-        p.bid = int(data['bid'])
+        p.bid = int(data["bid"])
         max_bid = max(p.bid for p in self.players if p.bid is not None)
         self.update()
         if p.bid == 3 or all(p.bid is not None for p in self.players):
@@ -167,21 +175,27 @@ class Game:
             self.assign_landlord()
         else:
             self.advance_player()
-            flash_message(f'''{p.username} bid {p.bid}, 
-                {self.players[self.current_player].username} is now bidding''', address=self.game_id)
+            flash_message(
+                f"""{p.username} bid {p.bid},
+                {self.players[self.current_player].username} is now bidding""",
+                address=self.game_id,
+            )
             self.update()
             self.get_bid(minimum=max_bid)
 
     def assign_landlord(self):
         """Determines who the landlord is"""
-        winner_loc, winner = max(enumerate(self.players),
-                                 key=lambda x: x[1].bid if x[1].bid is not None else 0)
+        winner_loc, winner = max(
+            enumerate(self.players),
+            key=lambda x: x[1].bid if x[1].bid is not None else 0,
+        )
 
         if winner.bid == 0:
             raise ValueError("Everyone passed, you should reshuffle")
 
         flash_message(
-            f'Bidding complete! The landlord is {str(winner)}', address=self.game_id)
+            f"Bidding complete! The landlord is {str(winner)}", address=self.game_id
+        )
         self.current_player = winner_loc
         self.winning_bid = winner.bid
 
@@ -196,41 +210,45 @@ class Game:
     def get_move(self, retry=False):
         p = self.players[self.current_player]
         if retry:
-            flash_message('Invalid move attempt, try again', address=p.sid)
-        send_socket('make move', None, p.sid)
+            flash_message("Invalid move attempt, try again", address=p.sid)
+        send_socket("make move", None, p.sid)
 
     def register_move(self, data):
         p = self.players[self.current_player]
-        move = [int(x) for x in data['move']]
-        discard = [int(x) for x in data['discard']]
-        print('registering move from ', str(p), move, discard)
+        move = [int(x) for x in data["move"]]
+        discard = [int(x) for x in data["discard"]]
+        print("registering move from ", str(p), move, discard)
 
         try:
             valid_move, valid_discard = self.validate_move(move, discard)
         except Exception as e:
             # redo, get the same move
+            print("Invalid move with exception", e)
             self.get_move(retry=True)
         else:
             self.hand_type = valid_move
             self.discard_type = valid_discard
             if len(move) == 0:
-                flash_message(f'{str(p)} passed', address=self.game_id)
+                flash_message(f"{str(p)} passed", address=self.game_id)
             else:
                 self.hand_history.append((move, discard, self.current_player))
                 flash_message(
-                    f'{str(p)} played a {valid_move} with {valid_discard}', address=self.game_id)
+                    f"{str(p)} played a {valid_move} with {valid_discard}",
+                    address=self.game_id,
+                )
 
-                p.last_move = move 
+                p.last_move = move
                 p.last_discard = discard
                 for card in [*move, *discard]:
                     p.hand.remove(card)
                     if card in p.visible_cards:
                         p.visible_cards.remove(card)
 
-                if ((valid_move == "quad" and valid_discard == "no-discard")
-                        or (valid_move == "rocket")):
+                if (valid_move == "quad" and valid_discard == "no-discard") or (
+                    valid_move == "rocket"
+                ):
                     # double the bid on a bomb
-                    self.winning_bid = 2*self.winning_bid
+                    self.winning_bid = 2 * self.winning_bid
 
             # move onto the next move
             self.update()
@@ -239,8 +257,11 @@ class Game:
     def determine_next_move(self, p):
         # check if the player has just won
         if len(p.hand) == 0:
-            flash_message(f'Round is over, {str(p)} won',
-                          event='flash append', address=self.game_id)
+            flash_message(
+                f"Round is over, {str(p)} won",
+                event="flash append",
+                address=self.game_id,
+            )
             self.update_scoreboard(p)
             return
         else:
@@ -249,20 +270,23 @@ class Game:
             if self.hand_history[-1][2] == self.current_player:
                 # the last move was by the current player
                 winner = self.players[self.current_player]
-                flash_message(f'{str(winner)} won that hand', address=self.game_id)
+                flash_message(f"{str(winner)} won that hand", address=self.game_id)
                 self.reset_hand_data()
                 self.update()
-                send_socket('hand over', None, winner.sid)
+                send_socket("hand over", None, winner.sid)
             else:
                 flash_message(
-                    f'waiting on {str(self.players[self.current_player])} to move',
-                    event='flash append', address=self.game_id)
+                    f"waiting on {str(self.players[self.current_player])} to move",
+                    event="flash append",
+                    address=self.game_id,
+                )
                 self.update()
                 self.get_move()
 
     def validate_move(self, move, discard):
-        """Takes in an attempted move and attempted discard and returns whether they are valid"""
-        print('validating', move, discard)
+        """Takes in an attempted move and attempted discard
+        and returns whether they are valid"""
+        print("validating", move, discard)
         if len(move) == 0 and len(discard) == 0:  # PASS
             if self.hand_type:
                 return self.hand_type, self.discard_type
@@ -277,8 +301,7 @@ class Game:
             if self.hand_type == hand_type and self.discard_type == discard_type:
                 last_move = self.hand_history[-1]
                 if sum(last_move[0]) >= sum(move):
-                    raise RuntimeError(
-                        f'Attempted move is weaker than last hand')
+                    raise RuntimeError("Attempted move is weaker than last hand")
                 else:
                     return hand_type, discard_type
             elif hand_type == "quad" and discard_type == "no-discard":
@@ -287,16 +310,18 @@ class Game:
                 return "rocket", "no-discard"
             else:
                 raise RuntimeError(
-                    f'''Hand type and discard type did not match what was required
-                    ({hand_type} !=  {self.hand_type} 
-                    or {discard_type} != {self.discard_type}''')
+                    f"""Hand type and discard type did not match what was required
+                    ({hand_type} !=  {self.hand_type}
+                    or {discard_type} != {self.discard_type}"""
+                )
         elif hand_type and discard_type:
             # both are valid, set the first move
             return hand_type, discard_type
         else:
             # first move was invalid
             raise RuntimeError(
-                f'''Attempted move was invalid move: {move} discard: {discard}''')
+                f"""Attempted move was invalid move: {move} discard: {discard}"""
+            )
 
     def advance_player(self):
         """Advances current player variable to the next player"""
@@ -314,12 +339,10 @@ class Game:
         for p in self.players:
             u = p.username
             if p == self.landlord:
-                self.scoreboard[u] = self.scoreboard.get(
-                    u, 0) + 2*bid*landlord_won
-                p.update_scoreboard(2*bid*landlord_won)
+                self.scoreboard[u] = self.scoreboard.get(u, 0) + 2 * bid * landlord_won
+                p.update_scoreboard(2 * bid * landlord_won)
             else:
-                self.scoreboard[u] = self.scoreboard.get(
-                    u, 0) - bid*landlord_won
-                p.update_scoreboard(-bid*landlord_won)
+                self.scoreboard[u] = self.scoreboard.get(u, 0) - bid * landlord_won
+                p.update_scoreboard(-bid * landlord_won)
         self.update()
         self.initialize_round()

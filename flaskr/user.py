@@ -1,5 +1,3 @@
-import random
-
 from flask_login import UserMixin
 from flaskr.db import get_db
 from bson.objectid import ObjectId
@@ -21,7 +19,7 @@ class User(UserMixin):
 
     @classmethod
     def from_record(cls, record):
-        user = User(record['username'], record['password_hash'])
+        user = User(record["username"], record["password_hash"])
         for key, value in record.items():
             setattr(user, key, value)
         return user
@@ -40,10 +38,19 @@ class User(UserMixin):
             return None
 
     def as_dict(self):
-        dict_vars = ['username', 'password_hash', 'game_id', 'sid', 'hand',
-        'visible_cards', 'bid', 'last_move', 'last_discard']
+        dict_vars = [
+            "username",
+            "password_hash",
+            "game_id",
+            "sid",
+            "hand",
+            "visible_cards",
+            "bid",
+            "last_move",
+            "last_discard",
+        ]
         temp = {k: getattr(self, k) for k in dict_vars}
-        temp['_id'] = ObjectId(self._id)
+        temp["_id"] = ObjectId(self._id)
         return temp
 
     @classmethod
@@ -52,7 +59,7 @@ class User(UserMixin):
             return None
         # finds user in db and returns object
         db = get_db().ddz
-        record = db.users.find_one({'_id': ObjectId(user_id)})
+        record = db.users.find_one({"_id": ObjectId(user_id)})
         if record is not None:
             user = User.from_record(record)
             user.id = user_id
@@ -63,18 +70,17 @@ class User(UserMixin):
     def check_username_availability(self):
         # returns True if username is available
         db = get_db().ddz
-        record = db.users.find_one({'username': self.username})
+        record = db.users.find_one({"username": self.username})
         return record is None
 
     def update_db(self):
         """Updates the user entry in the database"""
-        get_db().ddz.users.replace_one(
-            {'username': self.username}, self.as_dict())
+        get_db().ddz.users.replace_one({"username": self.username}, self.as_dict())
 
     def save(self):
         error = None
         if not self.check_username_availability():
-            error = 'Username already taken.'
+            error = "Username already taken."
         else:
             db = get_db().ddz
             user_id = db.users.insert_one(self.__dict__()).inserted_id
@@ -90,7 +96,7 @@ class User(UserMixin):
             self.game_id = game_id
             # TODO leave other game
             # raise RuntimeError("User is already in a game")
-        print(f'{self.username} joining game {self.game_id}')
+        print(f"{self.username} joining game {self.game_id}")
 
     def leave_game(self, game_id):
         self.game_id = None

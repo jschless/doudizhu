@@ -313,7 +313,7 @@ class Game:
         landlord_won = 1 if winning_player == self.landlord else -1
         for p in self.players:
             u = p.username
-            if u == self.landlord:
+            if p == self.landlord:
                 self.scoreboard[u] = self.scoreboard.get(
                     u, 0) + 2*bid*landlord_won
                 p.update_scoreboard(2*bid*landlord_won)

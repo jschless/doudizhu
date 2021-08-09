@@ -4,7 +4,7 @@ from flask import Flask
 from flask_socketio import SocketIO
 from flask_login import LoginManager
 
-socketio = SocketIO()
+socketio = SocketIO(cors_allowed_origins="*")
 login_manager = LoginManager()
 
 

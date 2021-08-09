@@ -1,1 +1,1 @@
-web: gunicorn "flaskr:create_app()"
+web: gunicorn --worker-class socketio.sgunicorn.GeventSocketIOWorker "flaskr:create_app()"

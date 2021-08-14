@@ -40,7 +40,7 @@ class Game:
         for k, v in self.__dict__.items():
             if k == "players":
                 mongo_record[k] = [p.as_dict() for p in v]
-            elif k == "landlord":
+            elif k in ["landlord", "game_owner"]:
                 mongo_record[k] = v.as_dict()
             else:
                 mongo_record[k] = v
@@ -63,6 +63,8 @@ class Game:
         return cls(game_id)
 
     def add_player_to_game(self, user: User):
+        if len(self.players) == 0:
+            self.game_owner = user
         self.players = [u for u in self.players if u != user]
         user.join_game(self.game_id)
         self.players.append(user)
@@ -326,7 +328,6 @@ class Game:
         for p in self.players:
             p.last_move = []
             p.last_discard = []
-
 
     def update_scoreboard(self, winning_player: User):
         """Updates the scores after the round is over"""

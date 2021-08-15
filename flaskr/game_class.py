@@ -40,7 +40,7 @@ class Game:
         for k, v in self.__dict__.items():
             if k == "players":
                 mongo_record[k] = [p.as_dict() for p in v]
-            elif k in ["landlord", "game_owner"]:
+            elif k in ["landlord", "game_owner"] and type(v) is not dict:
                 mongo_record[k] = v.as_dict()
             else:
                 mongo_record[k] = v
@@ -147,6 +147,12 @@ class Game:
         self.hand_type = None
         self.discard_type = None
         self.hand_history = []
+        self.last_move = []
+
+        for p in self.players:
+            p.bid = None
+            p.last_move = []
+            p.last_discard = []
 
         self.update()
         self.get_bid(minimum=-1)
@@ -191,6 +197,7 @@ class Game:
         flash_message(
             f"Bidding complete! The landlord is {str(winner)}", address=self.game_id
         )
+        print("debug bid", self.players, winner_loc, winner)
         self.current_player = winner_loc
         self.winning_bid = winner.bid
 

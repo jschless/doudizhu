@@ -15,7 +15,8 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
     else:
         app.config.from_mapping(
-            SECRET_KEY=os.environ["secret"], MONGO_URI=os.environ["mongodb_uri"]
+            SECRET_KEY=os.environ.get("secret", "dev"),
+            MONGO_URI=os.environ.get("mongodb_uri", "mongodb://localhost:27017/"),
         )
 
     login_manager.init_app(app)

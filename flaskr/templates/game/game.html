@@ -109,10 +109,10 @@
         setTimeout(() => socket.emit("next hand", info), 300);
     });
 
-    socket.on('flash', (m) => $("#flash").text(m).css('color', 'red'));
+    socket.on('flash', (m) => $("#flash").text(m).css('color', 'white'));
 
     socket.on('flash append', 
-        (m) => $("#flash").text($("#flash").text() + ' , ' + m).css('color', 'red'));
+        (m) => $("#flash").text($("#flash").text() + ' , ' + m).css('color', 'white'));
 
     $('#bidding').hide()
     $('#move_stuff').hide()

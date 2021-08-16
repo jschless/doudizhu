@@ -1,15 +1,24 @@
-The idea here is to create a web application to play DDZ.
-
-Steps: 
-1. Design game logic in python.
-2. Convert to flask app that can interface with web app.
-3. Create front end.
+This project is an English-language web server and UI for playing Dou Dizhu. The webstack is Flask, MongoDB, and SocketIO. The front end is hacked together using vanilla JS/CSS/HTML and jQuery. 
 
 ## Design
-I will use the Model-View-Controller framework. I
+todo 
 
-Classes:
-- player: this contains relevant information for the player (name, cards, score)
-- game: a game has multiple rounds
-- round: a round starts with the dealing and goes until someone runs out of cards.
-- hand: a hand is a sequence of plays
+## Development
+To get started and run this project locally, first clone it:
+
+1. Set yourself up Make sure you have a running MongoDB server. This can be local or a Mongo Atlas connection. For local:
+
+```bash sudo service mongod start && mongod```
+
+Create an environment variable for the correct Mongo URI:
+
+```bash export mongodb_uri = "mongodb://localhost:27017/"```
+
+
+2. Set Flask environmental variables:
+
+```bash 
+export FLASK_APP=flaskr
+export FLASK_ENV=development
+python -m flaskr
+```

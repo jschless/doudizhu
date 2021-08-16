@@ -66,12 +66,12 @@
 }
 
 .player1 {
+  justify-content: start;
   grid-area: player1;
 }
 
 .player1 h3{
-  grid-area: player1;
-  margin: 0 0 0 20px;
+  margin: 25 0 100 0px;
 }
 
 .playing-area {
@@ -79,8 +79,14 @@
 }
 
 .player2 {
+  justify-content: start;
   grid-area: player2;
 }
+
+.player2 h3{
+  margin: 25 0 100 0px;
+}
+
 .history {
   grid-area: history;
 }
@@ -91,7 +97,20 @@
 
 .chat {
   grid-area: chat;
+  justify-content: normal;
+  align-items: left;
 }
+
+.messages {
+  height: 80%;
+  width: 90%;
+  overflow: auto;
+}
+
+.chat .chat-submit {
+  justify-content: flex-end;
+}
+
 
 .playing-card {
   /* padding: 10px; */
@@ -124,4 +143,8 @@
 .bottom {
   float: bottom;
   margin-top: auto;
+}
+
+.waiting-room h3 {
+  margin: 20px;
 }

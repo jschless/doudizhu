@@ -17,7 +17,7 @@
   <div class="card player1"></div>
   <div class="card playing-area">
     <div class="waiting-room">
-      <h2>Waiting for more players to join! Share the game code ({{game['game_id']}}) and they can join this game.</h2>
+      <h3>Waiting for more players to join! Share the game code ({{game['game_id']}}) and they can join this game.</h3>
     </div>
     <h2 id="flash"></h2>
     <input id="start_game" type="submit" name="start_game" value="Start Game">
@@ -42,10 +42,12 @@
   <div class="card chat">
     <h3>Chat Room</h3>
     <div class="messages"></div>
-    <form action="" method="POST">
-      <input type="text" class="message" placeholder="Message"/>
-      <input type="submit" value="send"/>
-    </form>
+    <div class="chat-submit">
+      <form action="" method="POST">
+        <input type="text" class="message" placeholder="Message"/>
+        <input type="submit" value="send"/>
+      </form>  
+    </div>
   </div>
 </section>
 
@@ -246,8 +248,7 @@
 
   socket.on( 'chat broadcast', function( msg ) {
     if( typeof msg.user_name !== 'undefined' ) {
-      $( 'h3' ).remove()
-      $( '.messages' ).append( '<div><b style="color: #000">'+msg.user_name+'</b> '+msg.message+'</div>' )
+      $( '.messages' ).append( '<div><b style="color: #000">'+msg.user_name+':</b> '+msg.message+'</div>' )
     }
   });
 

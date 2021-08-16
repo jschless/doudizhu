@@ -155,7 +155,7 @@
     
         // SCOREBOARD section 
         $('.scoreboard').empty()
-            .append('<h2>Scoreboard</h2>', '<ol></ol>');
+            .append('<h3>Scoreboard</h3>', '<ol></ol>');
     
         $('.scoreboard ol').append(
             gameboard.usernames.map(user => 
@@ -166,7 +166,7 @@
         if (gameboard.other_players.length < 2) return;
         
         // PLAYER 1 section
-        $(".player1").empty().append('<h2>' + gameboard.other_players[0].username + '</h2>');
+        $(".player1").empty().append('<h3>' + gameboard.other_players[0].username + '</h3>');
         let visibleCards = getOtherCards(gameboard.other_players[0]);
         addImages(visibleCards, ".player1");
 
@@ -179,7 +179,7 @@
         
     
         // PLAYER 2 section
-        $(".player2").empty().append('<h2>' + gameboard.other_players[1].username + '</h2>');
+        $(".player2").empty().append('<h3>' + gameboard.other_players[1].username + '</h3>');
         visibleCards = getOtherCards(gameboard.other_players[1]);
         addImages(visibleCards, ".player2");
 

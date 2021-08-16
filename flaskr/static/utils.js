@@ -40,7 +40,7 @@ function getOtherCards(data) {
     return cardArr
 }
 
-function addImages(arr, jquery, chunk=5, classname="playing-card") {
+function addImages(arr, jquery, chunk=7, classname="playing-card") {
     // Adds images to the jquery, displays every chunk, adds classname to the image
     let temp;
     for (let i = 0; i < arr.length; i += chunk) {
@@ -52,7 +52,7 @@ function addImages(arr, jquery, chunk=5, classname="playing-card") {
             img.attr('class', classname);
             img.attr('src', '/static/card-images/' + cardToImage(card));
             temp.append(img)
-            if (x % 5 == 0) $(jquery).append('<br>');
+            // if (x % 5 == 0) $(jquery).append('<br>');
       });
       $(jquery).append(temp);
     }

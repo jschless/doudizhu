@@ -90,7 +90,7 @@ def run_round(data):
 
 
 @socketio.on("test round")
-def run_round(data):
+def run_test_round(data):
     game = Game(data["game_id"])
     game.initialize_test_round()
 

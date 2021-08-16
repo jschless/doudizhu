@@ -285,7 +285,7 @@ class Game:
     def game_over(self, p: User):
         """Handles things for when a game has ended"""
         flash_message(
-            f"""Round is over, {str(p)} won... 
+            f"""Round is over, {str(p)} won...
             {str(self.game_owner)} may start another round when ready""",
             event="flash append",
             address=self.game_id,
@@ -384,7 +384,7 @@ class Game:
                 p.update_scoreboard(-bid * landlord_won)
 
     def initialize_test_round(self):
-        """Creates a test round with loaded hands to test out joker bombs, airplanes, etc."""
+        """Creates a test round with loaded hands to test out joker bombs, airplanes,"""
         hands = [
             [3, 3, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15],
             [4, 4, 4, 5, 5, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17],

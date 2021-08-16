@@ -1,17 +1,4 @@
-import functools
-
-from flask import (
-    Blueprint,
-    flash,
-    g,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for,
-    abort,
-    send_from_directory,
-)
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from flask_login import login_user, logout_user, login_required
 from doudizhu.db import get_db

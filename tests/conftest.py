@@ -1,8 +1,8 @@
 import pytest
 
-from flaskr import create_app, socketio
-from flaskr.db import get_db, init_db
-from flaskr.game_class import Game
+from doudizhu import create_app, socketio
+from doudizhu.db import get_db, init_db
+from doudizhu.game_class import Game
 
 
 @pytest.fixture

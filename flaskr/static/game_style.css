@@ -117,6 +117,10 @@
   width: 50px;
 }
 
+.playing-area img {
+  width: 25px;
+}
+
 #container {
   width: 640px; /* Can be in percentage also. */
   height: auto;

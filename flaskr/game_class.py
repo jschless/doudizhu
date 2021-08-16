@@ -88,7 +88,7 @@ class Game:
             {"game_id": self.game_id}, self.to_mongo()
         )
 
-    def generate_game_data(self, player):
+    def generate_game_data(self, player: User, game_over: bool = False):
         """Create a dict to send to the client that includes relevant data"""
         game_state = {
             "other_players": [],
@@ -111,7 +111,7 @@ class Game:
                     {
                         "username": p.username,
                         "n_cards": len(p.hand),
-                        "visible_cards": p.visible_cards,
+                        "visible_cards": p.visible_cards if not game_over else p.hand,
                         "last_move": p.last_move,
                         "last_discard": p.last_discard,
                     }
@@ -272,17 +272,22 @@ class Game:
             self.update()
             self.determine_next_move(p)
 
+    def game_over(self, p: User):
+        """Handles things for when a game has ended"""
+        flash_message(
+            f"""Round is over, {str(p)} won... 
+            {str(self.game_owner)} may start another round when ready""",
+            event="flash append",
+            address=self.game_id,
+        )
+        self.round_in_progress = False
+        self.update_scoreboard(p)
+        self.update()
+
     def determine_next_move(self, p):
         # check if the player has just won
         if len(p.hand) == 0:
-            flash_message(
-                f"Round is over, {str(p)} won",
-                event="flash append",
-                address=self.game_id,
-            )
-            self.round_in_progress = False
-            self.update_scoreboard(p)
-            return
+            return self.game_over(p)
         else:
             # move onto the next player
             self.advance_player()
@@ -367,5 +372,3 @@ class Game:
             else:
                 self.scoreboard[u] = self.scoreboard.get(u, 0) - bid * landlord_won
                 p.update_scoreboard(-bid * landlord_won)
-        self.update()
-        self.initialize_round()

@@ -155,3 +155,10 @@ body { overflow: hidden }
   width: 25%;
   top: 25%; 
 }
+
+#rocket { 
+  position: absolute; 
+  bottom: -1000px; 
+  width: 20%;
+  left: 40%;
+}

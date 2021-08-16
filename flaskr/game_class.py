@@ -260,10 +260,6 @@ class Game:
                     address=self.game_id,
                 )
 
-                if valid_move in ["2-airplane", "3-airplane"]:
-                    print("sending airplane thing")
-                    send_socket("airplane", {})
-
                 p.last_move = move
                 p.last_discard = discard
                 for card in [*move, *discard]:
@@ -271,11 +267,14 @@ class Game:
                     if card in p.visible_cards:
                         p.visible_cards.remove(card)
 
-                if (valid_move == "quad" and valid_discard == "no-discard") or (
-                    valid_move == "rocket"
-                ):
-                    # double the bid on a bomb
+                if valid_move in ["2-airplane", "3-airplane"]:
+                    send_socket("airplane", {})
+                elif valid_move == "quad" and valid_discard == "no-discard":
                     self.winning_bid = 2 * self.winning_bid
+                    send_socket("bomb", {})
+                elif valid_move == "rocket":
+                    self.winning_bid = 2 * self.winning_bid
+                    send_socket("rocket", {})
 
             # move onto the next move
             self.update()

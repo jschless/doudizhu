@@ -12,7 +12,7 @@
 <body>
 <section class="animated-grid">
   <img id="plane" src="{{url_for('static', filename='airplane.webp')}}" />
-  <!-- source: https://pixabay.com/de/flugzeuge-propeller-aircraft-alt-3674305/ -->
+  <img id="rocket" src="{{url_for('static', filename='rocket.png')}}" />
   <div class="card gameid"></div>
   <div class="card title"></div>
   <div class="card scoreboard"></div>
@@ -75,6 +75,7 @@
     
     $("#start_game").hide();
     $("#plane").hide();
+    $("#rocket").hide();
 
     $("#debug").click(function(){
       socket.emit('test round', info);
@@ -277,7 +278,17 @@
               "left": screenWidth}, duration, function() {$("#plane").hide()});
   });
 
-  $('.animated-grid').effect( "shake" );
+  socket.on('rocket', function(){
+    console.log('rocket received')
+    $("#rocket").show();
+    let img = $("#rocket");
+    let screenHeight = $(window).height();
+    let duration = 5000;
+    img.css("top", screenHeight).animate({
+            "top": 0}, duration, function() {
+              $("#rocket").hide()});
+  });
+
 });
 
 </script>

@@ -47,6 +47,7 @@
         <input type="text" class="message" placeholder="Message"/>
         <input type="submit" value="send"/>
       </form>  
+      <input id="debug" type="submit" name="start_game" value="Start Game">
     </div>
   </div>
 </section>
@@ -71,12 +72,19 @@
     
     $("#start_game").hide();
 
+
+    $("#debug").click(function(){
+      socket.emit('next round', info);
+      $("#start_game").hide();
+    });
+
     $("#start_game").click(function(){
       socket.emit('next round', info);
       $("#start_game").hide();
     });
 
     socket.on('bid', function(max_bid){
+      $(".waiting-room").empty();
         //startTimer(15, 'pass-bid');
         $('#bidding').empty().append('<h2>Make your bid</h2>')
         let radios = [0];
@@ -101,6 +109,7 @@
     });
 
     socket.on('make move', function(){
+      $(".waiting-room").empty();
         $("#move_flash").text("It's your move!").css('color', 'red');
         hand = [];
         discard = [];
@@ -111,7 +120,10 @@
         setTimeout(() => socket.emit("next hand", info), 300);
     });
 
-    socket.on('flash', (m) => $("#flash").text(m).css('color', 'white'));
+    socket.on('flash', function(m) {
+      $("#flash").text(m).css('color', 'white');
+      $(".waiting-room").empty();
+    });
 
     socket.on('flash append', 
         (m) => $("#flash").text($("#flash").text() + ' , ' + m).css('color', 'white'));
@@ -205,27 +217,27 @@
             // .css('text-align', 'center');
         addImages(gameboard.hand, ".current-player #cards", 20, "my-playing-card");    
     
-        $(".my-playing-card").click( function() {
-            console.log('clicked')
-            if($(this).hasBorder()) {
-                $(this).css("border", "");
-                hand.pop($(this).attr("id"))
-            } else {
-                $(this).css("border", "5px solid red");
-                hand.push($(this).attr("id")); //something like this 
-            }
-        });
-    
-        $(".my-playing-card").dblclick( function() {
-            if($(this).hasBorder()) {
+        $(".my-playing-card").click( function(event) {
+            if (event.shiftKey) {
+              if($(this).hasBorder()) {
                 $(this).css("border", "");
                 discard.pop($(this).attr("id"))
                 }
-            else {
+              else {
                 $(this).css("border", "5px solid blue");
                 discard.push($(this).attr("id")); //something like this 
+              }
+            } else {
+              if($(this).hasBorder()) {
+                  $(this).css("border", "");
+                  hand.pop($(this).attr("id"))
+              } else {
+                  $(this).css("border", "5px solid red");
+                  hand.push($(this).attr("id")); //something like this 
+              }
             }
         });
+    
     
         $.fn.hasBorder = function() {   
             if ((this.outerWidth() - this.innerWidth() > 0) ||  (this.outerHeight() - this.innerHeight() > 0)){

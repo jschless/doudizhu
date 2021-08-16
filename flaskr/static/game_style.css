@@ -107,11 +107,6 @@
   overflow: auto;
 }
 
-.chat .chat-submit {
-  justify-content: flex-end;
-}
-
-
 .playing-card {
   /* padding: 10px; */
   width: 50px;
@@ -119,7 +114,7 @@
 
 .my-playing-card {
   margin: 0px 0px 10px 10px;
-  width: 75px;
+  width: 50px;
 }
 
 #container {

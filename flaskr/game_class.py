@@ -99,7 +99,13 @@ class Game:
             "scoreboard": self.scoreboard,
         }
 
-        usernames = [p.username for p in self.players]
+        if len(self.scoreboard) == 3:
+            usernames = [
+                tup[0] for tup in sorted(self.scoreboard.items(), key=lambda p: -p[1])
+            ]
+        else:
+            usernames = [p.username for p in self.players]
+
         for p in self.players:
             if p == player:
                 game_state["hand"] = p.hand

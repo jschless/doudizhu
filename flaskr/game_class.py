@@ -16,8 +16,8 @@ class Game:
             raise KeyError
 
         for key, value in record.items():
-            if key == "landlord":
-                self.landlord = User.from_record(value)
+            if key in ["landlord", "game_owner"]:
+                setattr(self, key, User.from_record(value))
             else:
                 setattr(self, key, value)
 
@@ -30,6 +30,7 @@ class Game:
             ("discard_type", None),
             ("hand_history", []),
             ("winning_bid", None),
+            ("round_in_progress", False),
         ]
         for var_name, default_value in default_vars:
             if not hasattr(self, var_name):
@@ -40,7 +41,7 @@ class Game:
         for k, v in self.__dict__.items():
             if k == "players":
                 mongo_record[k] = [p.as_dict() for p in v]
-            elif k in ["landlord", "game_owner"] and type(v) is not dict:
+            elif k in ["landlord", "game_owner"]:
                 mongo_record[k] = v.as_dict()
             else:
                 mongo_record[k] = v
@@ -63,6 +64,7 @@ class Game:
         return cls(game_id)
 
     def add_player_to_game(self, user: User):
+        user.clear_temporary_variables()
         if len(self.players) == 0:
             self.game_owner = user
         self.players = [u for u in self.players if u != user]
@@ -100,7 +102,7 @@ class Game:
 
         usernames = [p.username for p in self.players]
         for p in self.players:
-            if p.username == player.username:
+            if p == player:
                 game_state["hand"] = p.hand
                 game_state["last_move"] = p.last_move
                 game_state["last_discard"] = p.last_discard
@@ -116,6 +118,17 @@ class Game:
                 )
 
         game_state["usernames"] = usernames
+
+        # logic for beginning the game
+        if (
+            player == self.game_owner
+            and len(self.players) == 3
+            and not self.round_in_progress
+        ):
+            game_state["start_game"] = True
+        else:
+            game_state["start_game"] = False
+
         return game_state
 
     def initialize_round(self):
@@ -153,7 +166,9 @@ class Game:
             p.bid = None
             p.last_move = []
             p.last_discard = []
+            p.update_db()
 
+        self.round_in_progress = True
         self.update()
         self.get_bid(minimum=-1)
 
@@ -192,12 +207,14 @@ class Game:
         )
 
         if winner.bid == 0:
-            raise ValueError("Everyone passed, you should reshuffle")
+            flash_message("Everyone passed, reshuffling")
+            self.round_in_progress = False
+            self.initialize_round()
+            return
 
         flash_message(
             f"Bidding complete! The landlord is {str(winner)}", address=self.game_id
         )
-        print("debug bid", self.players, winner_loc, winner)
         self.current_player = winner_loc
         self.winning_bid = winner.bid
 
@@ -263,6 +280,7 @@ class Game:
                 event="flash append",
                 address=self.game_id,
             )
+            self.round_in_progress = False
             self.update_scoreboard(p)
             return
         else:
@@ -335,6 +353,7 @@ class Game:
         for p in self.players:
             p.last_move = []
             p.last_discard = []
+            p.update_db()
 
     def update_scoreboard(self, winning_player: User):
         """Updates the scores after the round is over"""

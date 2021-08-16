@@ -38,9 +38,6 @@ def create():
                     print("player re-entering room")
                 elif len(game.players) == 3:
                     error = "Game is full"
-                else:
-                    # add player to game on connection
-                    print("player has successfully joined")
 
         # TODO add a leave room option
 
@@ -61,7 +58,6 @@ def icon():
 @login_required
 @bp.route("/<id>", methods=("GET", "POST"))
 def gameboard(id):
-    print("gameboard id", id)
     game = Game(id).to_mongo()
     return render_template("game/game.html", game=game)
 
@@ -87,17 +83,9 @@ def disconnect_user():
     # game.remove_player_from_game(current_user)
 
 
-@socketio.on("debug")
-def debug(data):
-    """For random functions I want to test out,
-
-    so that I can activate them on clicking a button"""
-    run_round(data["game_id"])
-
-
 @socketio.on("next round")
-def run_round(game_id):
-    game = Game(game_id)
+def run_round(data):
+    game = Game(data["game_id"])
     game.initialize_round()
 
 
@@ -121,5 +109,4 @@ def add_move(data):
 
 @socketio.on("chat")
 def received_chat(data, methods=["GET", "POST"]):
-    print("received chat", data)
     socketio.emit("chat broadcast", data, to=data["game_id"])

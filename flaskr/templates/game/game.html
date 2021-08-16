@@ -16,11 +16,11 @@
   <div class="card scoreboard"></div>
   <div class="card player1"></div>
   <div class="card playing-area">
-    <input id="debug" type="submit" name="start_game" value="Start Game">
     <div class="waiting-room">
       <h2>Waiting for more players to join! Share the game code ({{game['game_id']}}) and they can join this game.</h2>
     </div>
     <h2 id="flash"></h2>
+    <input id="start_game" type="submit" name="start_game" value="Start Game">
     <div class="left" id="player1-move"></div>
     <div class="right" id="player2-move"></div>
     <div class="bottom" id="current-player-move"></div>
@@ -67,8 +67,11 @@
 
     socket.on('update gameboard', (gameboard) => drawGame(gameboard));
     
-    $("#debug").click(function(){
-      socket.emit('debug', info);
+    $("#start_game").hide();
+
+    $("#start_game").click(function(){
+      socket.emit('next round', info);
+      $("#start_game").hide();
     });
 
     socket.on('bid', function(max_bid){
@@ -113,6 +116,7 @@
 
     $('#bidding').hide()
     $('#move_stuff').hide()
+    $("#start_game").hide();
 
     function submitMove(){
       //clearInterval(x);
@@ -136,6 +140,7 @@
 
     function drawGame(gameboard) {
       console.log(gameboard)
+        if (gameboard.start_game == true) $("#start_game").show();
         // GAMEID  section
         $('.gameid').empty()
             .append(

@@ -8,14 +8,11 @@ class User(UserMixin):
         super().__init__()
         self.username = username
         self.password_hash = password_hash
+        self.lifetime_score = 0
         self.game_id = None
         self.sid = None
-        self.hand = []
-        self.visible_cards = []
-        self.bid = None
-        self.lifetime_score = 0
-        self.last_move = []
-        self.last_discard = []
+
+        self.clear_temporary_variables()
 
     @classmethod
     def from_record(cls, record):
@@ -27,6 +24,14 @@ class User(UserMixin):
     @property
     def is_authenticated(self):
         return True
+
+    def clear_temporary_variables(self):
+        """Initializes variables for each game"""
+        self.hand = []
+        self.visible_cards = []
+        self.bid = None
+        self.last_move = []
+        self.last_discard = []
 
     def __str__(self):
         return self.username

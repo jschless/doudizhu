@@ -77,12 +77,14 @@ class Game:
         user.leave_game()
         self.update()
 
-    def update(self):
+    def update(self, game_over: bool = False):
         """Updates the MongoDB record
 
         and sends a new gamestate to all connected users"""
         for p in self.players:
-            send_socket("update gameboard", self.generate_game_data(p), p.sid)
+            send_socket(
+                "update gameboard", self.generate_game_data(p, game_over), p.sid
+            )
         return get_db().ddz.games.replace_one(
             {"game_id": self.game_id}, self.to_mongo()
         )
@@ -290,7 +292,7 @@ class Game:
         )
         self.round_in_progress = False
         self.update_scoreboard(p)
-        self.update()
+        self.update(game_over=True)
 
     def determine_next_move(self, p):
         # check if the player has just won

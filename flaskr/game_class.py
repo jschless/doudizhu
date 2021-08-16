@@ -64,7 +64,6 @@ class Game:
         return cls(game_id)
 
     def add_player_to_game(self, user: User):
-        user.clear_temporary_variables()
         if len(self.players) == 0:
             self.game_owner = user
         self.players = [u for u in self.players if u != user]

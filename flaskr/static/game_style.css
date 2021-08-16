@@ -147,3 +147,11 @@
 .waiting-room h3 {
   margin: 20px;
 }
+
+body { overflow: hidden }
+#plane { 
+  position: absolute; 
+  left: -1000px; 
+  width: 25%;
+  top: 25%; 
+}

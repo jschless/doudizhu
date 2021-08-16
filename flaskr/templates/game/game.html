@@ -11,6 +11,8 @@
       </head>
 <body>
 <section class="animated-grid">
+  <img id="plane" src="https://cdn.pixabay.com/photo/2018/09/13/10/18/aircraft-3674305_640.png" />
+  <!-- source: https://pixabay.com/de/flugzeuge-propeller-aircraft-alt-3674305/ -->
   <div class="card gameid"></div>
   <div class="card title"></div>
   <div class="card scoreboard"></div>
@@ -48,7 +50,7 @@
         <input type="text" class="message" placeholder="Message"/>
         <input type="submit" value="send"/>
       </form>  
-      <input id="debug" type="submit" name="start_game" value="Start Game">
+      <input id="debug" type="submit" name="start_game" value="Test Round">
     </div>
   </div>
 </section>
@@ -72,10 +74,10 @@
     socket.on('update gameboard', (gameboard) => drawGame(gameboard));
     
     $("#start_game").hide();
-
+    $("#plane").hide();
 
     $("#debug").click(function(){
-      socket.emit('next round', info);
+      socket.emit('test round', info);
       $("#start_game").hide();
     });
 
@@ -265,6 +267,15 @@
     }
   });
 
+  socket.on('airplane', function(){
+      $("#plane").show();
+      let img = $("#plane");
+      let width = img.get(0).width;
+      let screenWidth = $(window).width();
+      let duration = 5000;
+      img.css("left", -width).animate({
+              "left": screenWidth}, duration, function() {$("#plane").hide()});
+  });
 });
 
 </script>

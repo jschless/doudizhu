@@ -260,6 +260,10 @@ class Game:
                     address=self.game_id,
                 )
 
+                if valid_move in ["2-airplane", "3-airplane"]:
+                    print("sending airplane thing")
+                    send_socket("airplane", {})
+
                 p.last_move = move
                 p.last_discard = discard
                 for card in [*move, *discard]:
@@ -377,3 +381,41 @@ class Game:
             else:
                 self.scoreboard[u] = self.scoreboard.get(u, 0) - bid * landlord_won
                 p.update_scoreboard(-bid * landlord_won)
+
+    def initialize_test_round(self):
+        """Creates a test round with loaded hands to test out joker bombs, airplanes, etc."""
+        hands = [
+            [3, 3, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 15],
+            [4, 4, 4, 5, 5, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17],
+            [6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14],
+        ]
+        self.blind = [14, 15, 15]
+
+        first_bid = 1
+        self.flipped_card = 4
+
+        for h, p in zip(hands, self.players):
+            p.hand = h
+            p.visible_cards = []
+
+        self.players[first_bid].visible_cards.append(self.flipped_card)
+
+        # Determine who starts the bidding (who has the flipped card)
+        self.first_bidder = first_bid
+        self.current_player = first_bid
+
+        # wipe round variables
+        self.hand_type = None
+        self.discard_type = None
+        self.hand_history = []
+        self.last_move = []
+
+        for p in self.players:
+            p.bid = None
+            p.last_move = []
+            p.last_discard = []
+            p.update_db()
+
+        self.round_in_progress = True
+        self.update()
+        self.get_bid(minimum=-1)

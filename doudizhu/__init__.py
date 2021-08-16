@@ -45,5 +45,5 @@ def create_app(test_config=None):
     return app
 
 
-if __name__ == "flaskr":
+if __name__ == "doudizhu":
     app = create_app()

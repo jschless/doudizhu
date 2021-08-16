@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-from flaskr.db import get_db
+from doudizhu.db import get_db
 from bson.objectid import ObjectId
 
 

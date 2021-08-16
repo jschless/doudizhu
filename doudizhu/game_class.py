@@ -1,10 +1,10 @@
 import random
 import string
 
-from flaskr.db import get_db
-from flaskr.socket_utils import send_socket, flash_message
-from flaskr.utils import validate_type, validate_discard
-from flaskr.user import User
+from doudizhu.db import get_db
+from doudizhu.socket_utils import send_socket, flash_message
+from doudizhu.utils import validate_type, validate_discard
+from doudizhu.user import User
 
 
 class Game:

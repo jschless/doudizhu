@@ -88,8 +88,11 @@ class User(UserMixin):
             error = "Username already taken."
         else:
             db = get_db().ddz
-            user_id = db.users.insert_one(self.__dict__()).inserted_id
+            user_id = db.users.insert_one(
+                {"username": self.username, "password_hash": self.password_hash}
+            ).inserted_id
             self._id = str(user_id)
+            self.update_db()
         return error
 
     def join_game(self, game_id):

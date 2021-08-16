@@ -11,7 +11,7 @@
       </head>
 <body>
 <section class="animated-grid">
-  <img id="plane" src="https://cdn.pixabay.com/photo/2018/09/13/10/18/aircraft-3674305_640.png" />
+  <img id="plane" src="{{url_for('static', filename='airplane.webp')}}" />
   <!-- source: https://pixabay.com/de/flugzeuge-propeller-aircraft-alt-3674305/ -->
   <div class="card gameid"></div>
   <div class="card title"></div>
@@ -276,6 +276,8 @@
       img.css("left", -width).animate({
               "left": screenWidth}, duration, function() {$("#plane").hide()});
   });
+
+  $('.animated-grid').effect( "shake" );
 });
 
 </script>

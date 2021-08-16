@@ -21,10 +21,10 @@ function cardToImage(card){
         return card_to_string[card] + '.png'
     }
     else if (card in card_to_string) {
-        return "club_" + card_to_string[card] + '.png'
+        return card_to_string[card] + '.png'
     }
     else {
-        return "club_" + card.toString() + '.png'
+        return card.toString() + '.png'
     }
 }
 

@@ -1,144 +1,156 @@
 <!DOCTYPE html>
 <html>
-     <head>
-        <meta charset="utf-8">
-        <title>Dou Dizhu</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
-        <script src="https://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
-        <script src="{{url_for('static', filename='utils.js')}}"></script>
-        <link rel="stylesheet" href="{{ url_for('static', filename='game_style.css') }}">
 
-      </head>
+<head>
+  <meta charset="utf-8">
+  <title>Dou Dizhu</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+    integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+    crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+  <script src="{{url_for('static', filename='utils.js')}}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='game_style.css') }}">
+
+</head>
+
 <body>
-<section class="animated-grid">
-  <img id="plane" src="{{url_for('static', filename='airplane.webp')}}" />
-  <img id="rocket" src="{{url_for('static', filename='rocket.png')}}" />
-  <div class="card gameid"></div>
-  <div class="card title"></div>
-  <div class="card scoreboard"></div>
-  <div class="card player1"></div>
-  <div class="card playing-area">
-    <div class="waiting-room">
-      <h3>Waiting for more players to join! Share the game code ({{game['game_id']}}) and they can join this game.</h3>
+  <section class="animated-grid">
+    <img id="plane" src="{{url_for('static', filename='airplane.webp')}}" />
+    <img id="rocket" src="{{url_for('static', filename='rocket.png')}}" />
+    <img id="bomb" src="{{url_for('static', filename='bomb.jpeg')}}" />
+    <div class="card gameid"></div>
+    <div class="card title"></div>
+    <div class="card scoreboard"></div>
+    <div class="card player1"></div>
+    <div class="card playing-area">
+      <div class="waiting-room">
+        <h3>Waiting for more players to join! Share the game code ({{game['game_id']}}) and they can join this game.
+        </h3>
+      </div>
+      <h2 id="flash"></h2>
+      <input id="start_game" type="submit" name="start_game" value="Start Game">
+      <div class="left" id="player1-move"></div>
+      <div class="right" id="player2-move"></div>
+      <div class="bottom" id="current-player-move"></div>
     </div>
-    <h2 id="flash"></h2>
-    <input id="start_game" type="submit" name="start_game" value="Start Game">
-    <div class="left" id="player1-move"></div>
-    <div class="right" id="player2-move"></div>
-    <div class="bottom" id="current-player-move"></div>
-  </div>
-  <div class="card player2"></div>
-  <div class="card history">
-    <div id="bidding"></div>
-    <div id="move_stuff">
-      <input id="submit_move" type="submit" name="submit move" value="Submit Move">
-      <input id="pass_move" type="submit" name="pass move" value="Pass">  
-    </div>
+    <div class="card player2"></div>
+    <div class="card history">
+      <div id="bidding"></div>
+      <div id="move_stuff">
+        <input id="submit_move" type="submit" name="submit move" value="Submit Move">
+        <input id="pass_move" type="submit" name="pass move" value="Pass">
+      </div>
 
-  </div>
-  <div class="card current-player">
-    <div id="move_flash"></div>
-    
-    <div id="cards"></div>
-
-  </div>
-  <div class="card chat">
-    <h3>Chat Room</h3>
-    <div class="messages"></div>
-    <div class="chat-submit">
-      <form action="" method="POST">
-        <input type="text" class="message" placeholder="Message"/>
-        <input type="submit" value="send"/>
-      </form>  
-      <input id="debug" type="submit" name="start_game" value="Test Round">
     </div>
-  </div>
-</section>
+    <div class="card current-player">
+      <div id="move_flash"></div>
+
+      <div id="cards"></div>
+
+    </div>
+    <div class="card chat">
+      <h3>Chat Room</h3>
+      <div class="messages"></div>
+      <div class="chat-submit">
+        <form action="" method="POST">
+          <input type="text" class="message" placeholder="Message" />
+          <input type="submit" value="send" />
+        </form>
+        <input id="debug" type="submit" name="start_game" value="Test Round">
+      </div>
+    </div>
+  </section>
 
 </body>
+
 </html>
 
 <script>
-  $(document).ready(function() {
+  $(document).ready(function () {
 
-    let info = {game_id: '{{game.game_id}}',
-                username: '{{current_user.username}}'};
+    let info = {
+      game_id: '{{game.game_id}}',
+      username: '{{current_user.username}}'
+    };
 
     let socket = io();
 
     let discard = [], hand = [];
 
-    
+
     socket.on('connect', () => socket.emit('add to database', info));
 
     socket.on('update gameboard', (gameboard) => drawGame(gameboard));
-    
+
     $("#start_game").hide();
     $("#plane").hide();
     $("#rocket").hide();
+    $("#bomb").hide();
 
-    $("#debug").click(function(){
+    $("#debug").click(function () {
       socket.emit('test round', info);
       $("#start_game").hide();
     });
 
-    $("#start_game").click(function(){
+    $("#start_game").click(function () {
       socket.emit('next round', info);
       $("#start_game").hide();
     });
 
-    socket.on('bid', function(max_bid){
+    socket.on('bid', function (max_bid) {
       $(".waiting-room").empty();
-        //startTimer(15, 'pass-bid');
-        $('#bidding').empty().append('<h2>Make your bid</h2>')
-        let radios = [0];
-        if (max_bid < 1 ) radios.push(1)
-        if (max_bid < 2) radios.push(2)
-        radios.push(3)
-        radios.forEach(value => {
-          $('#bidding')
+      startTimer(30, 'pass-bid');
+      $('#bidding').empty().append('<h2>Make your bid</h2>')
+      let radios = [0];
+      if (max_bid < 1) radios.push(1)
+      if (max_bid < 2) radios.push(2)
+      radios.push(3)
+      radios.forEach(value => {
+        $('#bidding')
           .append(`<input type="radio" id="${value}" name="bid" value="${value}">`)
           .append(`<label for="${value}">${value}</label></div>`)
           .append(`<br>`);
-        });
+      });
 
-        $('#bidding').append('<input id="submit_bid" type="submit" name="submit bid" value="Submit Bid">')
+      $('#bidding').append('<input id="submit_bid" type="submit" name="submit bid" value="Submit Bid">')
 
-        $('#bidding').show()
-        $('#submit_bid').click(function() {
-          let bid = $('input[name="bid"]:checked').val();
-          socket.emit('submit bid', {...info, bid: bid});
-          $('#bidding').hide()
-        });
+      $('#bidding').show()
+      $('#submit_bid').click(function () {
+        clearInterval(timer)
+        let bid = $('input[name="bid"]:checked').val();
+        socket.emit('submit bid', { ...info, bid: bid });
+        $('#bidding').hide()
+      });
     });
 
-    socket.on('make move', function(){
+    socket.on('make move', function () {
       $(".waiting-room").empty();
-        $("#move_flash").text("It's your move!").css('color', 'red');
-        hand = [];
-        discard = [];
-        $('#move_stuff').show();
+      startTimer(30, 'pass-move');
+      $("#move_flash").text("It's your move!").css('color', 'red');
+      hand = [];
+      discard = [];
+      $('#move_stuff').show();
     });
 
-    socket.on('hand over', function(winner){
-        setTimeout(() => socket.emit("next hand", info), 300);
+    socket.on('hand over', function (winner) {
+      setTimeout(() => socket.emit("next hand", info), 300);
     });
 
-    socket.on('flash', function(m) {
+    socket.on('flash', function (m) {
       $("#flash").text(m).css('color', 'white');
       $(".waiting-room").empty();
     });
 
-    socket.on('flash append', 
-        (m) => $("#flash").text($("#flash").text() + ' , ' + m).css('color', 'white'));
+    socket.on('flash append',
+      (m) => $("#flash").text($("#flash").text() + ' , ' + m).css('color', 'white'));
 
     $('#bidding').hide()
     $('#move_stuff').hide()
     $("#start_game").hide();
 
-    function submitMove(){
-      //clearInterval(x);
-      socket.emit('submit move', {...info, move: hand, discard: discard});
+    function submitMove() {
+      clearInterval(timer);
+      socket.emit('submit move', { ...info, move: hand, discard: discard });
       hand = [];
       discard = [];
       $("#timer").text("");
@@ -147,10 +159,10 @@
       $("img").css("border", "");
       lockCards = true;
     }
-    
+
     $("#submit_move").click(submitMove);
 
-    $("#pass_move").click(function(){
+    $("#pass_move").click(function () {
       hand = [];
       discard = [];
       submitMove();
@@ -158,137 +170,181 @@
 
     function drawGame(gameboard) {
       console.log(gameboard)
-        if (gameboard.start_game == true) $("#start_game").show();
-        // GAMEID  section
-        $('.gameid').empty()
-            .append(
-                $('<h3></h3>').text("Game ID: " + gameboard.game_id),
-                $('<h3></h3>').text("Current Bid: " + gameboard.winning_bid)
-            );
-    
-        // TITLE section
-        $('.title').empty()
-            .append($('<h1></h1>').text("Dou Dizhu"))
-            .css('font-size', '3rem');
-    
-        // SCOREBOARD section 
-        $('.scoreboard').empty()
-            .append('<h3>Scoreboard</h3>', '<ol></ol>');
-    
-        $('.scoreboard ol').append(
-            gameboard.usernames.map(user => 
-                "<li>" + user + " : " + get(gameboard.scoreboard, user, 0) + '</li>'
-            )
+      if (gameboard.start_game == true) $("#start_game").show();
+      // GAMEID  section
+      $('.gameid').empty()
+        .append(
+          $('<h3></h3>').text("Game ID: " + gameboard.game_id),
+          $('<h3></h3>').text("Current Bid: " + gameboard.winning_bid)
+        );
+
+      // TITLE section
+      $('.title').empty()
+        .append($('<h1></h1>').text("Dou Dizhu"))
+        .css('font-size', '3rem');
+
+      // SCOREBOARD section 
+      $('.scoreboard').empty()
+        .append('<h3>Scoreboard</h3>', '<ol></ol>');
+
+      $('.scoreboard ol').append(
+        gameboard.usernames.map(user =>
+          "<li>" + user + " : " + get(gameboard.scoreboard, user, 0) + '</li>'
         )
-        
-        if (gameboard.other_players.length < 2) return;
-        
-        // PLAYER 1 section
-        $(".player1").empty().append('<h3>' + gameboard.other_players[0].username + '</h3>');
-        let visibleCards = getOtherCards(gameboard.other_players[0]);
-        addImages(visibleCards, ".player1");
+      )
 
-        $('#player1-move').empty()
-        addMove(
-          get(gameboard.other_players[0], 'last_move', []),
-          get(gameboard.other_players[0], 'last_discard', []),
-          "#player1-move"
-        )
-        
-    
-        // PLAYER 2 section
-        $(".player2").empty().append('<h3>' + gameboard.other_players[1].username + '</h3>');
-        visibleCards = getOtherCards(gameboard.other_players[1]);
-        addImages(visibleCards, ".player2");
+      if (gameboard.other_players.length < 2) return;
 
-        $('#player2-move').empty()
-        addMove(
-          get(gameboard.other_players[1], 'last_move', []),
-          get(gameboard.other_players[1], 'last_discard', []),
-          "#player2-move"
-        )
+      // PLAYER 1 section
+      $(".player1").empty().append('<h3>' + gameboard.other_players[0].username + '</h3>');
+      let visibleCards = getOtherCards(gameboard.other_players[0]);
+      addImages(visibleCards, ".player1");
 
-        $('#current-player-move').empty()
-        addMove(
-          get(gameboard, 'last_move', []),
-          get(gameboard, 'last_discard', []),
-          "#current-player-move"
-        )
+      $('#player1-move').empty()
+      addMove(
+        get(gameboard.other_players[0], 'last_move', []),
+        get(gameboard.other_players[0], 'last_discard', []),
+        "#player1-move"
+      )
 
-        // This player section
-        $(".current-player #cards").empty()
-            // .append('<h2>' + "My Hand" + '</h2>')
-            // .css('text-align', 'center');
-        addImages(gameboard.hand, ".current-player #cards", 20, "my-playing-card");    
-    
-        $(".my-playing-card").click( function(event) {
-            if (event.shiftKey) {
-              if($(this).hasBorder()) {
-                $(this).css("border", "");
-                discard.pop($(this).attr("id"))
-                }
-              else {
-                $(this).css("border", "5px solid blue");
-                discard.push($(this).attr("id")); //something like this 
-              }
-            } else {
-              if($(this).hasBorder()) {
-                  $(this).css("border", "");
-                  hand.pop($(this).attr("id"))
-              } else {
-                  $(this).css("border", "5px solid red");
-                  hand.push($(this).attr("id")); //something like this 
-              }
-            }
-        });
-    
-    
-        $.fn.hasBorder = function() {   
-            if ((this.outerWidth() - this.innerWidth() > 0) ||  (this.outerHeight() - this.innerHeight() > 0)){
-                    return true;
-            } else { return false; }
-        };
-  }
 
-  // CHAT        
-  let form = $( 'form' ).on( 'submit', function( e ) {
-    e.preventDefault()
-    let user_input = $( 'input.message' ).val()
-    socket.emit('chat', {
-      ...info,
-      user_name: info.username,
-      message: user_input
-    } )
-    $( 'input.message' ).val( '' ).focus()
-  })
+      // PLAYER 2 section
+      $(".player2").empty().append('<h3>' + gameboard.other_players[1].username + '</h3>');
+      visibleCards = getOtherCards(gameboard.other_players[1]);
+      addImages(visibleCards, ".player2");
 
-  socket.on( 'chat broadcast', function( msg ) {
-    if( typeof msg.user_name !== 'undefined' ) {
-      $( '.messages' ).append( '<div><b style="color: #000">'+msg.user_name+':</b> '+msg.message+'</div>' )
+      $('#player2-move').empty()
+      addMove(
+        get(gameboard.other_players[1], 'last_move', []),
+        get(gameboard.other_players[1], 'last_discard', []),
+        "#player2-move"
+      )
+
+      $('#current-player-move').empty()
+      addMove(
+        get(gameboard, 'last_move', []),
+        get(gameboard, 'last_discard', []),
+        "#current-player-move"
+      )
+
+      // This player section
+      $(".current-player #cards").empty()
+      // .append('<h2>' + "My Hand" + '</h2>')
+      // .css('text-align', 'center');
+      addImages(gameboard.hand, ".current-player #cards", 20, "my-playing-card");
+
+      $(".my-playing-card").click(function (event) {
+        if (event.shiftKey) {
+          if ($(this).hasBorder()) {
+            $(this).css("border", "");
+            discard.pop($(this).attr("id"))
+          }
+          else {
+            $(this).css("border", "5px solid blue");
+            discard.push($(this).attr("id")); //something like this 
+          }
+        } else {
+          if ($(this).hasBorder()) {
+            $(this).css("border", "");
+            hand.pop($(this).attr("id"))
+          } else {
+            $(this).css("border", "5px solid red");
+            hand.push($(this).attr("id")); //something like this 
+          }
+        }
+      });
+
+
+      $.fn.hasBorder = function () {
+        if ((this.outerWidth() - this.innerWidth() > 0) || (this.outerHeight() - this.innerHeight() > 0)) {
+          return true;
+        } else { return false; }
+      };
     }
-  });
 
-  socket.on('airplane', function(){
-      $("#plane").show();
-      let img = $("#plane");
-      let width = img.get(0).width;
-      let screenWidth = $(window).width();
-      let duration = 5000;
-      img.css("left", -width).animate({
-              "left": screenWidth}, duration, function() {$("#plane").hide()});
-  });
+    // CHAT        
+    let form = $('form').on('submit', function (e) {
+      e.preventDefault()
+      let user_input = $('input.message').val()
+      socket.emit('chat', {
+        ...info,
+        user_name: info.username,
+        message: user_input
+      })
+      $('input.message').val('').focus()
+    })
 
-  socket.on('rocket', function(){
-    console.log('rocket received')
-    $("#rocket").show();
-    let img = $("#rocket");
-    let screenHeight = $(window).height();
-    let duration = 5000;
-    img.css("top", screenHeight).animate({
-            "top": 0}, duration, function() {
-              $("#rocket").hide()});
-  });
+    socket.on('chat broadcast', function (msg) {
+      if (typeof msg.user_name !== 'undefined') {
+        $('.messages').append('<div><b style="color: #000">' + msg.user_name + ':</b> ' + msg.message + '</div>')
+      }
+    });
 
-});
+
+    // Timer 
+    let timer;
+    function startTimer(nSeconds, action) {
+      // Begin a countdown 
+      let start = new Date().getTime();
+
+      timer = setInterval(function () {
+        // Get today's date and time
+        let now = new Date().getTime();
+
+        // Find the distance between now and the count down date
+        let distance = now - start;
+
+        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        // socket.emit('timer update', nSeconds - seconds);
+        $("#timer").text("Seconds left to make move: " + (nSeconds - seconds).toString())
+
+        // If the count down is finished, write some text
+        if (seconds > nSeconds) {
+          console.log('Ran out of time');
+          clearInterval(timer);
+          $("#timer").text("Time is up")
+          if (action == "pass-move") {
+            hand = [];
+            discard = [];
+            submitMove();
+          }
+          else if (action == "pass-bid") {
+            socket.emit('submit bid', { info, bid: 0 });
+          }
+        }
+      }, 1000);
+
+      // Fun Effects
+      socket.on('airplane', function () {
+        $("#plane").show();
+        let img = $("#plane");
+        let width = img.get(0).width;
+        let screenWidth = $(window).width();
+        let duration = 5000;
+        img.css("left", -width).animate({
+          "left": screenWidth
+        }, duration, function () { $("#plane").hide() });
+      });
+
+      socket.on('rocket', function () {
+        $("#rocket").show();
+        let img = $("#rocket");
+        let screenHeight = $(window).height();
+        let duration = 5000;
+        img.css("top", screenHeight).animate({
+          "top": 0
+        }, duration, function () {
+          $("#rocket").hide()
+        });
+      });
+
+      socket.on('bomb', function () {
+        $("#bomb").fadeIn(2000);
+        $("#bomb").fadeOut(2000, function () {
+          $("#bomb").hide();
+        });
+      })
+
+    });
 
 </script>

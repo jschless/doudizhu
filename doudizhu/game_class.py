@@ -277,6 +277,8 @@ class Game:
                 elif valid_move == "rocket":
                     self.winning_bid = 2 * self.winning_bid
                     send_socket("rocket", {})
+                elif move == [3, 4, 5, 6, 7]:
+                    send_socket("baby-straight", {})
 
             # move onto the next move
             self.update()

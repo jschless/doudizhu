@@ -162,3 +162,10 @@ body { overflow: hidden }
   width: 20%;
   left: 40%;
 }
+
+#bomb { 
+  position: absolute; 
+  top: 40%;
+  width: 20%;
+  left: 40%;
+}

@@ -2,7 +2,10 @@ from . import socketio
 
 
 def send_socket(message: str, data, address=None):
-    socketio.emit(message, data, to=address)
+    if address:
+        socketio.emit(message, data, to=address)
+    else:
+        socketio.emit(message, data)
 
 
 def flash_message(message: str, address=None, event="flash") -> None:

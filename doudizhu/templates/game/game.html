@@ -68,6 +68,7 @@
 
 <script>
   $(document).ready(function () {
+    let timer;
 
     let info = {
       game_id: '{{game.game_id}}',
@@ -283,7 +284,6 @@
 
 
     // Timer 
-    let timer;
     function startTimer(nSeconds, action) {
       // Begin a countdown 
       let start = new Date().getTime();
@@ -330,6 +330,7 @@
       });
 
       socket.on('rocket', function () {
+        console.log('receiving rocket effect');
         $("#rocket").show();
         let img = $("#rocket");
         let screenHeight = $(window).height();
@@ -342,6 +343,7 @@
       });
 
       socket.on('bomb', function () {
+        console.log('receiving bomb effect');
         $("#bomb").fadeIn(2000);
         $("#bomb").fadeOut(2000, function () {
           $("#bomb").hide();

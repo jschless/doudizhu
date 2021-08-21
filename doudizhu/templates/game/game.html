@@ -17,7 +17,7 @@
   <section class="animated-grid">
     <img id="plane" src="{{url_for('static', filename='airplane.webp')}}" />
     <img id="rocket" src="{{url_for('static', filename='rocket.png')}}" />
-    <img id="bomb" src="{{url_for('static', filename='bomb.jpeg')}}" />
+    <img id="bomb" src="{{url_for('static', filename='bomb.png')}}" />
     <div class="card gameid"></div>
     <div class="card title"></div>
     <div class="card scoreboard"></div>
@@ -35,6 +35,7 @@
     </div>
     <div class="card player2"></div>
     <div class="card history">
+      <div id="timer"></div>
       <div id="bidding"></div>
       <div id="move_stuff">
         <input id="submit_move" type="submit" name="submit move" value="Submit Move">
@@ -116,7 +117,7 @@
 
       $('#bidding').show()
       $('#submit_bid').click(function () {
-        clearInterval(timer)
+        clearInterval(timer);
         let bid = $('input[name="bid"]:checked').val();
         socket.emit('submit bid', { ...info, bid: bid });
         $('#bidding').hide()
@@ -302,14 +303,15 @@
         if (seconds > nSeconds) {
           console.log('Ran out of time');
           clearInterval(timer);
-          $("#timer").text("Time is up")
+          $("#timer").text("")
           if (action == "pass-move") {
             hand = [];
             discard = [];
             submitMove();
           }
           else if (action == "pass-bid") {
-            socket.emit('submit bid', { info, bid: 0 });
+            socket.emit('submit bid', { ...info, bid: 0 });
+            $("#bidding").empty();
           }
         }
       }, 1000);
@@ -343,8 +345,9 @@
         $("#bomb").fadeOut(2000, function () {
           $("#bomb").hide();
         });
-      })
+      });
 
-    });
+    }
+  });
 
 </script>

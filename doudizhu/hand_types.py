@@ -1,21 +1,10 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Type
+from typing import List, Optional, Tuple, Type
 from collections import Counter
 
 names = {1: "single", 2: "pair", 3: "triple", 4: "quad"}
 discard_moves = {"triple": 1, "quad": 2, "2-triple straight": 2, "3-triple straight": 3}
-
-
-def validate_hand(hand: List[int]):
-    temp = Set.classify_hand(hand)
-    if temp is None:
-        temp = Run.classify_hand(hand)
-
-    if temp is None:
-        return InvalidType()
-
-    return temp
 
 
 class HandType(ABC):
@@ -26,18 +15,7 @@ class HandType(ABC):
         return cls
 
 
-def validate_discard(discard: List[int], hand_type: Type[HandType]):
-    if len(discard) == 0:
-        return Empty()
-    else:
-        discard_type = Discard.classify_hand(discard)
-        n_discards = discard_moves.get(hand_type.name, 0)
-        if discard_type.n_cards == n_discards:
-            return discard_type
-
-    return InvalidType
-
-
+@dataclass
 class InvalidType(HandType):
     name = "InvalidType"
 
@@ -46,7 +24,11 @@ class InvalidType(HandType):
 
 
 class Empty(HandType):
-    name = "Empty"
+    name = "empty"
+
+
+class Rocket(HandType):
+    name = "rocket"
 
 
 @dataclass(order=True)
@@ -149,6 +131,68 @@ class Run(HandType):
 
     def __str__(self):
         return f"{self.name} from {self.start}"
+
+
+def validate_hand(hand: List[int]):
+    if len(hand) == 0:
+        return Empty()
+    if sorted(hand) == [16, 17]:
+        return Rocket()
+    temp = Set.classify_hand(hand)
+    if temp is None:
+        temp = Run.classify_hand(hand)
+
+    if temp is None:
+        return InvalidType()
+
+    return temp
+
+
+def validate_discard(discard: List[int], hand_type: Type[HandType]):
+    if hand_type == InvalidType():
+        return InvalidType()
+    elif len(discard) == 0:
+        return Empty()
+    else:
+        discard_type = Discard.classify_hand(discard)
+        n_discards = discard_moves.get(hand_type.name, 0)
+        if discard_type.n_cards == n_discards:
+            return discard_type
+
+    return InvalidType()
+
+
+def validate_move(
+    hand: List[int],
+    discard: List[int],
+    existing_hand_type: Optional[Type[HandType]] = None,
+    existing_discard_type: Optional[Type[HandType]] = None,
+) -> Tuple[Type[HandType], Type[HandType]]:
+
+    hand_type = validate_hand(hand)
+    discard_type = validate_discard(discard, hand_type)
+    if hand_type.name == "InvalidMove":
+        raise RuntimeError(f"Attempted invalid move: {hand}")
+    elif discard_type.name == "InvalidMove":
+        raise RuntimeError(f"Attempted invalid discard: {discard_type}")
+    elif existing_hand_type is None and existing_discard_type is None:
+        if hand_type.name == "Empty":
+            raise RuntimeError("Attempted to pass on the first move")
+        return hand_type, discard_type
+    elif (
+        hand_type.name == existing_hand_type.name
+        and discard_type.name == existing_discard_type.name
+    ):
+        if hand_type > existing_hand_type:
+            return hand_type, discard_type
+        else:
+            raise RuntimeError("Attempted move is weaker than last hand")
+    else:
+        raise (
+            f"""Hand type and discard type did not match what was required
+                    ({hand_type} !=  {existing_hand_type}
+                    or {discard_type} != {existing_discard_type}"""
+        )
 
 
 # print(Set.classify_hand([3, 3, 3, 3]))

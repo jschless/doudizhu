@@ -3,8 +3,8 @@ import string
 
 from doudizhu.db import get_db
 from doudizhu.socket_utils import send_socket, flash_message
-from doudizhu.utils import validate_type, validate_discard
 from doudizhu.user import User
+from doudizhu.hand_types import validate_move
 
 
 class Game:
@@ -95,8 +95,8 @@ class Game:
             "other_players": [],
             "game_id": self.game_id,
             "winning_bid": self.winning_bid,
-            "hand_type": self.hand_type,
-            "discard_type": self.discard_type,
+            "hand_type": self.hand_type.name,
+            "discard_type": self.discard_type.name,
             "hand_history": self.hand_history,
             "scoreboard": self.scoreboard,
         }
@@ -245,40 +245,38 @@ class Game:
         discard = [int(x) for x in data["discard"]]
 
         try:
-            valid_move, valid_discard = self.validate_move(move, discard)
-        except Exception as e:
-            # redo, get the same move
-            print("Invalid move with exception", e)
+            move_type, discard_type = validate_move(move, discard)
+        except RuntimeError as e:
+            print(e, "Move was invalid", move, discard)
             self.get_move(retry=True)
         else:
-            self.hand_type = valid_move
-            self.discard_type = valid_discard
-            if len(move) == 0:
-                flash_message(f"{str(p)} passed", address=self.game_id)
-            else:
-                self.hand_history.append((move, discard, self.current_player))
-                flash_message(
-                    f"{str(p)} played a {valid_move} with {valid_discard}",
-                    address=self.game_id,
-                )
+            if self.hand_type is None:
+                self.hand_type = move_type
+                self.discard_type = discard_type
 
-                p.last_move = move
-                p.last_discard = discard
-                for card in [*move, *discard]:
-                    p.hand.remove(card)
-                    if card in p.visible_cards:
-                        p.visible_cards.remove(card)
+            self.hand_history.append((move, discard, self.current_player))
+            flash_message(
+                f"{str(p)} played a {move_type} with {discard_type}",
+                address=self.game_id,
+            )
 
-                if valid_move in ["2-airplane", "3-airplane"]:
-                    send_socket("airplane", {})
-                elif valid_move == "quad" and valid_discard == "no-discard":
-                    self.winning_bid = 2 * self.winning_bid
-                    send_socket("bomb", {})
-                elif valid_move == "rocket":
-                    self.winning_bid = 2 * self.winning_bid
-                    send_socket("rocket", {})
-                elif move == [3, 4, 5, 6, 7]:
-                    send_socket("baby-straight", {})
+            p.last_move = move
+            p.last_discard = discard
+            for card in [*move, *discard]:
+                p.hand.remove(card)
+                if card in p.visible_cards:
+                    p.visible_cards.remove(card)
+
+            if move_type.name in ["2-triple straight", "3-triple straight"]:
+                send_socket("airplane", {})
+            elif move_type.name == "quad" and discard_type.name == "empty":
+                self.winning_bid = 2 * self.winning_bid
+                send_socket("bomb", {})
+            elif move_type.name == "rocket":
+                self.winning_bid = 2 * self.winning_bid
+                send_socket("rocket", {})
+            elif move == [3, 4, 5, 6, 7]:
+                send_socket("baby-straight", {})
 
             # move onto the next move
             self.update()
@@ -300,64 +298,24 @@ class Game:
         # check if the player has just won
         if len(p.hand) == 0:
             return self.game_over(p)
+
+        # move onto the next player
+        self.advance_player()
+        if self.hand_history[-1][2] == self.current_player:
+            # the last move was by the current player
+            winner = self.players[self.current_player]
+            flash_message(f"{str(winner)} won that hand", address=self.game_id)
+            self.reset_hand_data()
+            self.update()
+            send_socket("hand over", None, winner.sid)
         else:
-            # move onto the next player
-            self.advance_player()
-            if self.hand_history[-1][2] == self.current_player:
-                # the last move was by the current player
-                winner = self.players[self.current_player]
-                flash_message(f"{str(winner)} won that hand", address=self.game_id)
-                self.reset_hand_data()
-                self.update()
-                send_socket("hand over", None, winner.sid)
-            else:
-                flash_message(
-                    f"waiting on {str(self.players[self.current_player])} to move",
-                    event="flash append",
-                    address=self.game_id,
-                )
-                self.update()
-                self.get_move()
-
-    def validate_move(self, move, discard):
-        """Takes in an attempted move and attempted discard
-        and returns whether they are valid"""
-
-        if len(move) == 0 and len(discard) == 0:  # PASS
-            if self.hand_type:
-                return self.hand_type, self.discard_type
-            else:
-                raise Exception("attempted to pass on the first move")
-
-        hand_type = validate_type(move)
-        discard_type = validate_discard(discard, hand_type)
-
-        if self.hand_type is not None:
-            # there is already a round type, make sure it's valid
-            if self.hand_type == hand_type and self.discard_type == discard_type:
-                last_move = self.hand_history[-1]
-                if sum(last_move[0]) >= sum(move):
-                    raise RuntimeError("Attempted move is weaker than last hand")
-                else:
-                    return hand_type, discard_type
-            elif hand_type == "quad" and discard_type == "no-discard":
-                return "quad", "no-discard"
-            elif hand_type == "rocket" and discard_type == "no-discard":
-                return "rocket", "no-discard"
-            else:
-                raise RuntimeError(
-                    f"""Hand type and discard type did not match what was required
-                    ({hand_type} !=  {self.hand_type}
-                    or {discard_type} != {self.discard_type}"""
-                )
-        elif hand_type and discard_type:
-            # both are valid, set the first move
-            return hand_type, discard_type
-        else:
-            # first move was invalid
-            raise RuntimeError(
-                f"""Attempted move was invalid move: {move} discard: {discard}"""
+            flash_message(
+                f"waiting on {str(self.players[self.current_player])} to move",
+                event="flash append",
+                address=self.game_id,
             )
+            self.update()
+            self.get_move()
 
     def advance_player(self):
         """Advances current player variable to the next player"""
@@ -367,7 +325,9 @@ class Game:
         self.hand_type = None
         self.discard_type = None
         self.hand_history = []
+        self.last_move = []
         for p in self.players:
+            p.bid = None
             p.last_move = []
             p.last_discard = []
             p.update_db()
@@ -408,16 +368,7 @@ class Game:
         self.current_player = first_bid
 
         # wipe round variables
-        self.hand_type = None
-        self.discard_type = None
-        self.hand_history = []
-        self.last_move = []
-
-        for p in self.players:
-            p.bid = None
-            p.last_move = []
-            p.last_discard = []
-            p.update_db()
+        self.reset_hand_data()
 
         self.round_in_progress = True
         self.update()

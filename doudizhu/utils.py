@@ -113,7 +113,4 @@ def possible_valid_moves(cards: List, move_type: str) -> List[List]:
     Returns:
         List[List]: list of possible moves
     """
-    counter = Counter(cards)
-    possible_moves = []
-
-    return possible_moves
+    pass

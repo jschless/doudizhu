@@ -43,6 +43,17 @@ class Rocket(HandType):
     def __str__(self):
         return "rocket"
 
+    def can_move(self, cards: List[int]) -> bool:
+        """Returns whether a player can move with given hands
+
+        Args:
+            cards (List[int]): Available cards to make a move
+
+        Returns:
+            bool: Whether a move can be made with the inputted cards
+        """
+        return False
+
 
 @dataclass(order=True)
 class Discard(HandType):
@@ -78,6 +89,20 @@ class Set(HandType):
         if len(values) > 1:
             return None  # more than one value
         return cls(value=values[0], freq=counts[0])
+
+    def can_move(self, cards: List[int]) -> bool:
+        """Returns whether a player can move with given hands
+
+        Args:
+            cards (List[int]): Available cards to make a move
+
+        Returns:
+            bool: Whether a move can be made with the inputted cards
+        """
+        for value, count in Counter(sorted(cards)).items():
+            if value > self.value and count == self.freq:
+                return True
+        return False
 
     @property
     def name(self):
@@ -127,16 +152,34 @@ class Run(HandType):
 
         return cls(start=values[0], n_cards=n_cards, freq=freq)
 
-    def build_options_from_deck(self, deck: List[int]) -> List[List[int]]:
-        """Takes a deck of cards and returns all possible hand types
+    def can_move(self, cards: List[int]) -> bool:
+        """Returns whether a player can move with given hands
 
         Args:
-            deck (List[int]): list of ints representing card deck
+            cards (List[int]): Available cards to make a move
 
         Returns:
-            List[List[int]]: list of possible hands that match this type
+            bool: Whether a move can be made with the inputted cards
         """
-        pass
+        # remove impossible values
+        forbidden = [15, 16, 17]
+        cards = [c for c in cards if c > self.start and c not in forbidden]
+        attempt = []
+        for card, freq in sorted(Counter(cards).items()):
+            if len(attempt) == 0:
+                # if we have no attempt and can start one, do so
+                if freq == self.freq:
+                    attempt.append(card)
+            elif (card - attempt[-1] == 1) and freq == self.freq:
+                # build if it's the right freq and it's next in sequence
+                attempt.append(card)
+            else:
+                attempt = []
+
+            if len(attempt) == self.n_cards:
+                return True
+
+        return False
 
     @property
     def name(self):
@@ -236,18 +279,11 @@ def hand_type_from_dict(args: dict) -> HandType:
         return Set(**args)
 
 
-# print(Set.classify_hand([3, 3, 3, 3]))
-# print(Set.classify_hand([3, 3, 3, 3, 4]))
+a = Set(4, 2)
+print(a.can_move([5, 5]))
+print(a.can_move([4, 4]))
+print(a.can_move([5, 6, 7]))
 
-# print(Run.classify_hand([4, 5, 6, 7, 8, 9]))
-# print(Run.classify_hand([4, 4, 5, 5]))
-# print(Run.classify_hand([4, 4, 4, 5, 5, 5]))
-# a = Run.classify_hand([4, 4, 5, 5, 6, 6])
-# b = Run.classify_hand([7, 7, 5, 5, 6, 6])
-# print(b > a)
-# print(b.name == a.name)
-
-# print(Discard.classify_hand([3, 3, 4, 4]))
-# print(Discard.classify_hand([3, 3, 4, 4, 5]))
-# print(Discard.classify_hand([3, 3, 4, 4, 4]))
-# print(Discard.classify_hand([3, 4]))
+b = Run(3, 3, 2)
+print(b.can_move([5, 5, 5, 6, 6, 6]))
+print(b.can_move([5, 5, 6, 6]))

@@ -1,8 +1,8 @@
 import pytest
 from flask import session
-from flaskr.db import get_db
+from doudizhu.db import get_db
 from flask_login import current_user
-from flaskr.loginform import LoginForm
+from doudizhu.loginform import LoginForm
 
 
 def test_create(client, app):

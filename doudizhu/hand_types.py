@@ -277,13 +277,3 @@ def hand_type_from_dict(args: dict) -> HandType:
         return Discard(**args)
     else:
         return Set(**args)
-
-
-a = Set(4, 2)
-print(a.can_move([5, 5]))
-print(a.can_move([4, 4]))
-print(a.can_move([5, 6, 7]))
-
-b = Run(3, 3, 2)
-print(b.can_move([5, 5, 5, 6, 6, 6]))
-print(b.can_move([5, 5, 6, 6]))

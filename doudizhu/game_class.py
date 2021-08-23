@@ -76,9 +76,13 @@ class Game:
     def add_player_to_game(self, user: User):
         if len(self.players) == 0:
             self.game_owner = user
-        self.players = [u for u in self.players if u != user]
-        user.join_game(self.game_id)
-        self.players.append(user)
+
+        if user not in self.players:
+            user.join_game(self.game_id)
+            self.players.append(user)
+        else:
+            loc = self.players.index(user)
+            self.players[loc] = user
         self.update()
 
     def remove_player_from_game(self, user: User):

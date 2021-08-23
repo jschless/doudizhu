@@ -1,6 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Type
+from typing import List, Tuple, Type
 from collections import Counter
 
 names = {1: "single", 2: "pair", 3: "triple", 4: "quad"}

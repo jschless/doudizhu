@@ -1,7 +1,6 @@
 from dataclasses import asdict
 import random
 import string
-from typing import Type
 from doudizhu.db import get_db
 from doudizhu.socket_utils import send_socket, flash_message
 from doudizhu.user import User

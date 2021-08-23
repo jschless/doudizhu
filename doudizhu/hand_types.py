@@ -16,19 +16,32 @@ class HandType(ABC):
 
 
 @dataclass
+class UninitializedType(HandType):
+    name: str = "UninitializedType"
+
+
+@dataclass
 class InvalidType(HandType):
-    name = "InvalidType"
+    name: str = "InvalidType"
 
     def __str__(self):
         return self.name
 
 
+@dataclass
 class Empty(HandType):
-    name = "empty"
+    name: str = "Empty"
+
+    def __str__(self):
+        return "no attachments"
 
 
+@dataclass
 class Rocket(HandType):
-    name = "rocket"
+    name: str = "Rocket"
+
+    def __str__(self):
+        return "rocket"
 
 
 @dataclass(order=True)
@@ -71,7 +84,7 @@ class Set(HandType):
         return names[self.freq]
 
     def __str__(self):
-        return f"{self.freq}-{self.name}"
+        return f"{self.value}-{self.name}"
 
 
 @dataclass(order=True)
@@ -165,17 +178,21 @@ def validate_discard(discard: List[int], hand_type: Type[HandType]):
 def validate_move(
     hand: List[int],
     discard: List[int],
-    existing_hand_type: Optional[Type[HandType]] = None,
-    existing_discard_type: Optional[Type[HandType]] = None,
+    existing_hand_type: Type[HandType],
+    existing_discard_type: Type[HandType],
 ) -> Tuple[Type[HandType], Type[HandType]]:
 
     hand_type = validate_hand(hand)
     discard_type = validate_discard(discard, hand_type)
-    if hand_type.name == "InvalidMove":
+    print(hand_type, discard_type)
+    if hand_type == InvalidType():
         raise RuntimeError(f"Attempted invalid move: {hand}")
-    elif discard_type.name == "InvalidMove":
+    elif discard_type == InvalidType():
         raise RuntimeError(f"Attempted invalid discard: {discard_type}")
-    elif existing_hand_type is None and existing_discard_type is None:
+    elif (
+        existing_hand_type == UninitializedType()
+        and existing_discard_type == UninitializedType()
+    ):
         if hand_type.name == "Empty":
             raise RuntimeError("Attempted to pass on the first move")
         return hand_type, discard_type
@@ -187,12 +204,36 @@ def validate_move(
             return hand_type, discard_type
         else:
             raise RuntimeError("Attempted move is weaker than last hand")
+    elif hand_type == Empty() and discard_type == Empty():
+        return hand_type, discard_type
+    elif (
+        hand_type.name == "quad" and discard_type == Empty()
+    ) or hand_type == Rocket():
+        return hand_type, discard_type
     else:
-        raise (
+        raise RuntimeError(
             f"""Hand type and discard type did not match what was required
                     ({hand_type} !=  {existing_hand_type}
                     or {discard_type} != {existing_discard_type}"""
         )
+
+
+def hand_type_from_dict(args: dict) -> HandType:
+    name = args.get("name", "")
+    if name == "Empty":
+        return Empty()
+    elif name == "InvalidType":
+        return InvalidType()
+    elif name == "UninitializedType":
+        return UninitializedType()
+    elif name == "Rocket":
+        return Rocket()
+    elif "start" in args:
+        return Run(**args)
+    elif "n_cards" in args:
+        return Discard(**args)
+    else:
+        return Set(**args)
 
 
 # print(Set.classify_hand([3, 3, 3, 3]))

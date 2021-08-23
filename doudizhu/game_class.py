@@ -1,10 +1,17 @@
+from dataclasses import asdict
 import random
 import string
-
+from typing import Type
 from doudizhu.db import get_db
 from doudizhu.socket_utils import send_socket, flash_message
 from doudizhu.user import User
-from doudizhu.hand_types import validate_move
+from doudizhu.hand_types import (
+    hand_type_from_dict,
+    validate_move,
+    UninitializedType,
+    Empty,
+    HandType,
+)
 
 
 class Game:
@@ -18,6 +25,8 @@ class Game:
         for key, value in record.items():
             if key in ["landlord", "game_owner"]:
                 setattr(self, key, User.from_record(value))
+            elif key in ["hand_type", "discard_type"]:
+                setattr(self, key, hand_type_from_dict(value))
             else:
                 setattr(self, key, value)
 
@@ -26,8 +35,8 @@ class Game:
             self.players.append(User.from_record(p))
 
         default_vars = [
-            ("hand_type", None),
-            ("discard_type", None),
+            ("hand_type", UninitializedType()),
+            ("discard_type", UninitializedType()),
             ("hand_history", []),
             ("winning_bid", None),
             ("round_in_progress", False),
@@ -40,9 +49,11 @@ class Game:
         mongo_record = {}
         for k, v in self.__dict__.items():
             if k == "players":
-                mongo_record[k] = [p.as_dict() for p in v]
+                mongo_record[k] = [p.asdict() for p in v]
             elif k in ["landlord", "game_owner"]:
-                mongo_record[k] = v.as_dict()
+                mongo_record[k] = v.asdict()
+            elif k in ["hand_type", "discard_type"]:
+                mongo_record[k] = asdict(v)
             else:
                 mongo_record[k] = v
         return mongo_record
@@ -164,16 +175,7 @@ class Game:
         self.current_player = first_bid
 
         # wipe round variables
-        self.hand_type = None
-        self.discard_type = None
-        self.hand_history = []
-        self.last_move = []
-
-        for p in self.players:
-            p.bid = None
-            p.last_move = []
-            p.last_discard = []
-            p.update_db()
+        self.reset_hand_data()
 
         self.round_in_progress = True
         self.update()
@@ -245,20 +247,22 @@ class Game:
         discard = [int(x) for x in data["discard"]]
 
         try:
-            move_type, discard_type = validate_move(move, discard)
+            move_type, discard_type = validate_move(
+                move, discard, self.hand_type, self.discard_type
+            )
         except RuntimeError as e:
             print(e, "Move was invalid", move, discard)
             self.get_move(retry=True)
         else:
-            if self.hand_type is None:
+            if self.hand_type == UninitializedType():
                 self.hand_type = move_type
                 self.discard_type = discard_type
 
-            self.hand_history.append((move, discard, self.current_player))
-            flash_message(
-                f"{str(p)} played a {move_type} with {discard_type}",
-                address=self.game_id,
-            )
+            msg = f"{str(p)} passed"
+            if move_type != Empty():
+                self.hand_history.append((move, discard, self.current_player))
+                msg = f"{str(p)} played a {move_type} with {discard_type}"
+            flash_message(msg, address=self.game_id)
 
             p.last_move = move
             p.last_discard = discard
@@ -269,18 +273,23 @@ class Game:
 
             if move_type.name in ["2-triple straight", "3-triple straight"]:
                 send_socket("airplane", {})
-            elif move_type.name == "quad" and discard_type.name == "empty":
-                self.winning_bid = 2 * self.winning_bid
-                send_socket("bomb", {})
-            elif move_type.name == "rocket":
-                self.winning_bid = 2 * self.winning_bid
-                send_socket("rocket", {})
+            elif (
+                move_type.name == "quad" and discard_type == Empty()
+            ) or move_type.name == "Rocket":
+                self.bomb(move_type)
             elif move == [3, 4, 5, 6, 7]:
                 send_socket("baby-straight", {})
 
             # move onto the next move
             self.update()
             self.determine_next_move(p)
+
+    def bomb(self, move_type: HandType):
+        self.winning_bid = 2 * self.winning_bid
+        self.hand_type = move_type
+        self.discard_type = Empty()
+        kind = "bomb" if move_type.name == "quad" else "rocket"
+        send_socket(kind, {})
 
     def game_over(self, p: User):
         """Handles things for when a game has ended"""
@@ -322,8 +331,8 @@ class Game:
         self.current_player = (self.current_player + 1) % 3
 
     def reset_hand_data(self):
-        self.hand_type = None
-        self.discard_type = None
+        self.hand_type = UninitializedType()
+        self.discard_type = UninitializedType()
         self.hand_history = []
         self.last_move = []
         for p in self.players:

@@ -176,10 +176,11 @@
       // GAMEID  section
       $('.gameid').empty()
         .append(
-          $('<h3></h3>').text("Game ID: " + gameboard.game_id),
+          $('<h3></h3>').text("Game ID: " + gameboard.game_id));
+      if (gameboard.winning_bid !== null)
+        $('.gameid').append(
           $('<h3></h3>').text("Current Bid: " + gameboard.winning_bid)
         );
-
       // TITLE section
       $('.title').empty()
         .append($('<h1></h1>').text("Dou Dizhu"))

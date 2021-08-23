@@ -42,7 +42,7 @@ class User(UserMixin):
         except AttributeError:
             return None
 
-    def as_dict(self):
+    def asdict(self):
         dict_vars = [
             "username",
             "password_hash",
@@ -80,7 +80,7 @@ class User(UserMixin):
 
     def update_db(self):
         """Updates the user entry in the database"""
-        get_db().ddz.users.replace_one({"username": self.username}, self.as_dict())
+        get_db().ddz.users.replace_one({"username": self.username}, self.asdict())
 
     def save(self):
         error = None

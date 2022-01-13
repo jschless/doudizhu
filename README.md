@@ -22,3 +22,15 @@ export FLASK_APP=flaskr
 export FLASK_ENV=development
 python -m flaskr
 ```
+
+## Bugs
+- Add resilience in case someone refreshes or disconnect (this involves resending messages or tracking the entire gamestate)
+- Before sending to a socket... check if it exists... remove players that left
+- A million timers are created
+
+## Features
+- Animation: rattle (shake)
+- Spring-light
+- Suggested move 
+- Blind remains in the middle, player knows which of his cards are visible
+- At end of round, show entire hand (with used cards greyed out, perhaps)
